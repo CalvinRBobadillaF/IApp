@@ -100,7 +100,7 @@ console.log(prevPrompts)
           <div>
             <img src={assets.gallery_icon} alt="gallery" />
             <img src={assets.mic_icon} alt="mic" />
-            {userPrompt? <img src={assets.send_icon} alt="send" onClick={() => onSent(userPrompt)}/> : null  }
+            {userPrompt? <img src={assets.send_icon} alt="send" onClick={() => onSent()}/> : null  }
           </div>
         </div>
 
