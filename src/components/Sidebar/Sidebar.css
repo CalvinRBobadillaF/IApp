@@ -4,19 +4,23 @@
     display: inline-flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: #f0f4f9;
+    background-color: #131826;
     padding: 25px 15px;
     width: auto;
 }
 
 .sidebar img {
     width: 20px;
+    
+    color: white;
 }
 
 .sidebar .menu {
     display: block;
     margin-left: 10px;
     cursor: pointer;
+    
+    color: white;
 }
 
 .sidebar .new-chat {
@@ -29,7 +33,8 @@
     border-radius: 50px;
     font-size: 14px;
     cursor: pointer;
-    color: black;
+    color: white;
+    background-color: #0B0F19;
 }
 
 .sidebar .recent {
@@ -50,17 +55,25 @@
     padding: 10px;
     padding-right: 40px;
     border-radius: 50px;
-    color: #282828;
+    color: #c4c7c5;
     cursor: pointer;
+    
+}
+
+.sidebar .recent-entry img {
+    background-color: white;
+    border-radius: 50%;
+    
 }
 
 .sidebar .recent-entry:hover {
-    background-color: #e2e6eb;
+    background-color: #242127;
 }
 
 .sidebar .bottom {
     display: flex;
     flex-direction: column;
+    
 }
 
 .sidebar .bottom-item {

@@ -9,6 +9,7 @@
   min-height: 100vh;
   display: flex;
   animation: fadeIn 1s ;
+  background-color: #0B0F19;
 }
 
 @keyframes fadeIn {
