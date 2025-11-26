@@ -6,6 +6,7 @@
     justify-content: space-between;
     background-color: #f0f4f9;
     padding: 25px 15px;
+    width: auto;
 }
 
 .sidebar img {
@@ -34,6 +35,7 @@
 .sidebar .recent {
     display: flex;
     flex-direction: column;
+    animation: fadeIn, 1s;
 }
 
 .sidebar .recent-title {
@@ -64,4 +66,24 @@
 .sidebar .bottom-item {
     padding-right: 10px;
     cursor: pointer;
+}
+
+
+
+@media (max-width: 600px) {
+    
+
+    .sidebar  {
+        display: none;
+        min-width: 68vw;
+        
+        overflow-y: hidden;
+    }
+
+    .sidebar.open {
+    display: inline-flex;
+    height: 100%;
+    
+    
+}
 }

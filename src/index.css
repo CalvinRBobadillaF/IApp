@@ -8,4 +8,34 @@
 #root {
   min-height: 100vh;
   display: flex;
+  animation: fadeIn 1s ;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  #root {
+    overflow-x: hidden;
+  }
+  .main-bottom input {
+    flex: none;
+    width: 150px;
+    
+  } 
+  .main-bottom img {
+    width: 20px;
+  }
+  .search-box {
+    padding: 5px 10px;
+  }
+  .search-box div {
+    gap: 5px;
+  }
 }

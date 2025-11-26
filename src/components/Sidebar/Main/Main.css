@@ -180,14 +180,8 @@
     animation: loader 3s infinite linear
 }
 
-@keyframes loader {
-    0% {
-        background-position: -800px 0px;
-
-    }
-    100% {
-        background-position: 800px 0px;
-    }
+.MenuMobile {
+    display: none;
 }
 
 .result-data p {
@@ -198,3 +192,29 @@
     border-radius: 8px;
     padding: 20px;
 }
+
+@media (max-width: 600px) {
+    .MenuMobile {
+        display: block;
+    }
+
+    .greet span{
+        font-size: 40px;
+    }
+    .greet p {
+        font-size: 40px;
+    }
+}
+
+@keyframes loader {
+    0% {
+        background-position: -800px 0px;
+
+    }
+    100% {
+        background-position: 800px 0px;
+    }
+}
+
+
+

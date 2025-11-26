@@ -5,6 +5,7 @@ import main from "../config/gemini";
 export const Context = createContext()
 
 const ContextProvider = (props) => {
+    const [openSidebar, setOpenSidebar] = useState(false)
 
     const [userPrompt, setUserPrompt] = useState('')
     const [recentPrompt, setRecentPrompt] = useState('')
@@ -19,15 +20,30 @@ const ContextProvider = (props) => {
         }, 30*index)
     }
 
+    const newChat = () => {
+        setLoading(false)
+        setShowResult(false)
+
+    }
+
     const onSent = async (prompt) => {
         setResultData("")
         setLoading(true)
         setShowResult(true)
-        setRecentPrompt(userPrompt)
-        setPrevPrompts(prev => [...prev, userPrompt])
-        const response = await main(userPrompt)
+        let response
+        if (prompt !== undefined) {
+            
+        response = await main(prompt)
+        setRecentPrompt(prompt)
+        } else {
+            setPrevPrompts(prev => [...prev, userPrompt])
+            setRecentPrompt(userPrompt)
+            
+            response = await main(userPrompt)
+        }
+        
         let responseArray = response.split("**")
-        let newResponse 
+        let newResponse = ""
         for(let i = 0; i < responseArray.length; i++) {
             if (i === 0 || i%2 !== 1) {
                 newResponse += responseArray[i]
@@ -62,7 +78,10 @@ const ContextProvider = (props) => {
         setLoading,
         resultData,
         setResultData,
-        onSent
+        onSent,
+        openSidebar,
+        setOpenSidebar,
+        newChat
     }
     
     
