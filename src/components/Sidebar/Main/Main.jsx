@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import {ReactMarkdown} from "react"
 import './Main.css'
 import { assets } from "../../../assets/assets";
@@ -21,8 +21,12 @@ const handleKeyDown = (e) => {
     }
 };
 
+useEffect(() => {
+        if (resultData && resultData.length > 0) {
+            
+        }
+    }, [resultData]);
 
-console.log(prevPrompts)
 {
   return (
     <div className="main">
@@ -37,56 +41,82 @@ console.log(prevPrompts)
       </div>
 
       <div className="main-container">
-        {!showResult ? 
-          <>
-            <div className="greet">
-              <span>Hello, human</span>
-              <p>How can I help you</p>
-            </div>
-
-            <div className="cards">
-              <div className="card" onClick={() =>  setRecentPrompt('Suggest ideas to use IA in the best way possible',  onSent('Suggest ideas to use IA in the best way possible'), setPrevPrompts(prev => [...prev, userPrompt]))}>
-                <p>Suggest ideas to use IA in the best way possible</p>
-                <img src={assets.compass_icon} alt="compass" />
-              </div>
-
-              <div className="card" onClick={() => { setRecentPrompt('1 Month workout routine to be in your best shape', onSent('1 Month workout routine to be in your best shape'), setPrevPrompts(prev => [...prev, userPrompt]))}}>
-                <p>1 Month workout routine to be in your best shape</p>
-                <img src={assets.bulb_icon} alt="bulb" />
-              </div>
-
-              <div className="card" onClick={() => setRecentPrompt('Create an history about dogs and cats', onSent('Create an history about dogs and cats'), setPrevPrompts(prev => [...prev, userPrompt]))}>
-                <p onClick={() => setUserPrompt('Create an history about dogs and cats')}>Create an history about dogs and cats</p>
-                <img src={assets.message_icon} alt="message" />
-              </div>
-
-              <div className="card" onClick={() => setRecentPrompt('Create a simple tetris game with Python', onSent('Create a simple tetris game with Python'),  setPrevPrompts(prev => [...prev, userPrompt]))}>
-                <p>Create a simple tetris game with Python</p>
-                <img src={assets.code_icon} alt="code" />
-              </div>
-            </div>
-          </>
-         : 
-          <div className="result" >
-            <div className="result-title">
-                <img src={assets.user_icon} alt="" />
-                <p>{recentPrompt}</p>
-            </div>
-            <div className="result-data">
-                
-                {loading? <>
-                <div className="loader">
-                    <hr />
-                    <hr />
-                    <hr />
-                </div>
-                </> : <p dangerouslySetInnerHTML={{__html:resultData}}></p>}
-                <img src={assets.gemini_icon} alt="" />
-            </div>
-            </div>
-          
-        }
-      
+                {/* 💡 SOLUCIÓN CLAVE: Si hay resultados (o historial), mostrarlo */}
+                {!showResult ? 
+                    <>
+                        <div className="greet">
+                            <span>Hello, human</span>
+                            <p>How can I help you</p>
+                        </div>
+                        <div className="cards">
+                            <div className="card" onClick={() => handleCardClick('Suggest ideas to use IA in the best way possible')}>
+                                <p>Suggest ideas to use IA in the best way possible</p>
+                                <img src={assets.compass_icon} alt="compass" />
+                            </div>
+                            <div className="card" onClick={() => handleCardClick('1 Month workout routine to be in your best shape')}>
+                                <p>1 Month workout routine to be in your best shape</p>
+                                <img src={assets.bulb_icon} alt="bulb" />
+                            </div>
+                            <div className="card" onClick={() => handleCardClick('Create an history about dogs and cats')}>
+                                <p>Create an history about dogs and cats</p>
+                                <img src={assets.message_icon} alt="message" />
+                            </div>
+                            <div className="card" onClick={() => handleCardClick('Create a simple tetris game with Python')}>
+                                <p>Create a simple tetris game with Python</p>
+                                <img src={assets.code_icon} alt="code" />
+                            </div>
+                        </div>
+                    </>
+                : 
+                    // 💡 NUEVO CÓDIGO: Mapear sobre prevPrompts para mostrar cada mensaje
+                    <div className="result">
+                        {prevPrompts.map((item, index) => {
+                            if (item.role === 'user') {
+                                return (
+                                    <div key={index} className="result-title user-message">
+                                        <img src={assets.user_icon} alt="User" />
+                                        <p>{item.text}</p>
+                                    </div>
+                                );
+                            } else { // role === 'model'
+                                // Si es la última respuesta Y está cargando, usa resultData (animado)
+                                // De lo contrario, muestra el texto completo de la respuesta de la IA
+                                const isLastModelMessage = index === prevPrompts.length - 1 && loading;
+                                return (
+                                    <div key={index} className="result-data ai-message">
+                                        <img src={assets.gemini_icon} alt="AI" />
+                                        {isLastModelMessage ? 
+                                            // Muestra el loader si aún está cargando la última respuesta
+                                            <>
+                                                {loading && resultData.length === 0 ? (
+                                                    <div className="loader">
+                                                        <hr /><hr /><hr />
+                                                    </div>
+                                                ) : (
+                                                    <p dangerouslySetInnerHTML={{ __html: resultData }}></p>
+                                                )}
+                                            </>
+                                            : 
+                                            // Si no es la última respuesta o ya terminó de cargar, muestra el texto completo
+                                            <p dangerouslySetInnerHTML={{ __html: item.text }}></p>
+                                        }
+                                    </div>
+                                );
+                            }
+                        })}
+                        {/* // Si quieres mostrar un loader genérico mientras la IA escribe la última respuesta,
+                            // podrías añadirlo aquí, pero la lógica de arriba ya lo maneja
+                            {loading && prevPrompts.length > 0 && prevPrompts[prevPrompts.length - 1].role === 'user' ? (
+                                <div className="result-data ai-message">
+                                    <img src={assets.gemini_icon} alt="AI" />
+                                    <div className="loader">
+                                        <hr /><hr /><hr />
+                                    </div>
+                                </div>
+                            ) : null} 
+                        */}
+                    </div>
+                }
 
       <div className="main-bottom">
         <div className="search-box">
