@@ -12,7 +12,7 @@
     justify-content: space-between;
     font-size: 22px;
     padding: 20px;
-    color: #585858;
+    color: #272626;
 
 }
 
@@ -61,7 +61,7 @@
 .main .card {
     height: 200px;
     padding: 15px;
-    background-color: #181E2F;
+    background-color: #2e2e2e;
     border-radius: 10px;
     position: relative;
     cursor: pointer;
@@ -103,7 +103,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    background-color: #181E2F;
+    background-color: #2c2c2c;
     padding: 10px 20px;
     border-radius: 50px;
 
@@ -140,7 +140,7 @@
 .result{
     padding: 0px 5%;
     max-height: 70vh;
-    overflow-y: scroll;
+    overflow-y: hidden;
 }
 
 .result::-webkit-scrollbar {
@@ -222,6 +222,12 @@
         font-size: 40px;
         color: rgb(141, 140, 140);
     }
+    .main .card {
+        height: 100px;
+    padding: 10px;
+    }
+
+    
 }
 
 @keyframes loader {

@@ -9,7 +9,7 @@
   min-height: 100vh;
   display: flex;
   animation: fadeIn 1s ;
-  background-color: #0B0F19;
+  background-color: rgb(10, 10, 10);
 }
 
 @keyframes fadeIn {
@@ -24,6 +24,7 @@
 @media (max-width: 600px) {
   #root {
     overflow-x: hidden;
+    overflow-y: hidden;
   }
   .main-bottom input {
     flex: none;

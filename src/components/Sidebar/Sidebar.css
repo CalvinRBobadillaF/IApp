@@ -4,7 +4,7 @@
     display: inline-flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: #131826;
+    background-color: #121212;
     padding: 25px 15px;
     width: auto;
 }
@@ -15,11 +15,12 @@
     color: white;
 }
 
-.sidebar .menu {
+
+.sidebar .MenuPC {
     display: block;
     margin-left: 10px;
     cursor: pointer;
-    
+    width: 35px;
     color: white;
 }
 
@@ -83,20 +84,28 @@
 
 
 
+
+
 @media (max-width: 600px) {
     
 
     .sidebar  {
         display: none;
         min-width: 68vw;
-        
+        overflow-x: none;
         overflow-y: hidden;
     }
+
+    
 
     .sidebar.open {
     display: inline-flex;
     height: 100%;
     
     
+}
+
+.sidebar .MenuPC {
+    display: none;
 }
 }
