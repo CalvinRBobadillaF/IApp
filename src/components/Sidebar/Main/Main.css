@@ -140,7 +140,7 @@
 .result{
     padding: 0px 5%;
     max-height: 70vh;
-    overflow-y: hidden;
+    
 }
 
 .result::-webkit-scrollbar {
@@ -207,6 +207,14 @@
     background-color: #181E2F;
     border-radius: 8px;
     padding: 20px;
+}
+
+.main-container {
+    overflow-y: scroll;
+}
+
+.main-container::-webkit-scrollbar {
+    display: none;
 }
 
 @media (max-width: 600px) {
