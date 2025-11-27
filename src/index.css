@@ -24,7 +24,7 @@
 @media (max-width: 600px) {
   #root {
     overflow-x: hidden;
-    overflow-y: hidden;
+    
   }
   .main-bottom input {
     flex: none;
