@@ -29,6 +29,12 @@ const ContextProvider = (props) => {
     const [showResult, setShowResult] = useState(loadState('showResult', false));
     const [loading, setLoading] = useState(false)
     const [resultData, setResultData] = useState(loadState('resultData', ''));
+    const [geminiKey, setGeminiKey] = useState('')
+    const [userName, setUserName] = useState('')
+    const [logged, setLogged] = useState(false)
+    
+    
+    
 
     useEffect(() => {
         try {
@@ -42,7 +48,7 @@ const ContextProvider = (props) => {
     }, [recentPrompt, prevPrompts, showResult, resultData]);
 
     
-
+    
     const delayPara = (index, nextWord) => {
         setTimeout(function () {
             setResultData(prev => prev + nextWord)
@@ -126,6 +132,12 @@ const ContextProvider = (props) => {
         onSent,
         openSidebar,
         setOpenSidebar,
+        logged, 
+        setLogged,
+        userName,
+        setUserName,
+        geminiKey,
+        setGeminiKey,
         newChat
     }
     

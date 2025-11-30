@@ -7,7 +7,9 @@ import { Context } from "../../../Context/Context";
 
 const Main = () => {
 
-let {onSent, setPrevPrompts, recentPrompt, showResult, loading, resultData, setUserPrompt, userPrompt, setRecentPrompt, prevPrompts, openSidebar, setOpenSidebar} = useContext(Context)
+let {onSent, showResult, loading, resultData, setUserPrompt, userPrompt, userName,  prevPrompts, openSidebar, setOpenSidebar} = useContext(Context)
+    let userStorage = localStorage.getItem('User')
+    const user = userStorage.replace(/["\\]/g, "")
 
 const handleKeyDown = (e) => {
     // 1. Comprueba si la tecla presionada es 'Enter'
@@ -45,7 +47,7 @@ useEffect(() => {
                 {!showResult ? 
                     <>
                         <div className="greet">
-                            <span>Hello, human</span>
+                            <span>Hello, {user}</span>
                             <p>How can I help you</p>
                         </div>
                         <div className="cards">

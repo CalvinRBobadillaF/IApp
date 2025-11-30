@@ -1,0 +1,75 @@
+/* ----- LOGIN CONTAINER ----- */
+.login-container {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+flex-direction: column;
+  background: radial-gradient(circle at top, #1c1c1c, #0b0b0b);
+  padding: 20px;
+}
+
+/* ----- CARD ----- */
+.login-box {
+  width: 350px;
+  padding: 35px;
+  border-radius: 18px;
+
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.18);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  animation: fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ----- INPUTS ----- */
+.login-box input {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #111;
+  border: 1px solid #333;
+  color: #e6e6e6;
+
+  outline: none;
+  transition: 0.2s ease;
+  font-size: 15px;
+}
+
+.login-box input::placeholder {
+  color: #777;
+}
+
+.login-box input:focus {
+  border-color: #00eaff;
+  box-shadow: 0 0 10px #00eaff55;
+}
+
+/* ----- BUTTON (si luego agregas uno) ----- */
+.login-btn {
+  margin-top: 40px;
+  padding: 13px 60px;
+  background: linear-gradient(135deg, #00eaff, #007bff);
+  color: #0d0d0d;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  transition: 0.25s ease;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px #00eaff;
+}

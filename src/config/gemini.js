@@ -1,17 +1,15 @@
 
 
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
- 
+const rawKey = localStorage.getItem("Gemini Key");
+const apiKey = rawKey?.replace(/["\\]/g, "");
+
 
 import { GoogleGenAI } from "@google/genai";
 
-//Pasamos el apikey al constructor de IA
-const ai = new GoogleGenAI({ apiKey: apiKey });
-
-
-//Con una funcion asincrona tratamos de hacer fecth a la gemini api.
 async function main(prompt) {
+  const ai = new GoogleGenAI({ apiKey: apiKey });
+  console.log(apiKey)
     try {
   
   const response = await ai.models.generateContent({
@@ -33,3 +31,5 @@ config: {
 }
 
 export default main;
+
+
