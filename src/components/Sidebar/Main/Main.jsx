@@ -1,152 +1,137 @@
-import React, { useContext, useEffect } from "react";
-import {ReactMarkdown} from "react"
-import './Main.css'
+import { useContext } from "react";
+import './Main.css';
 import { assets } from "../../../assets/assets";
-
 import { Context } from "../../../Context/Context";
 
 const Main = () => {
 
-let {onSent, showResult, loading, resultData, setUserPrompt, userPrompt, userName,  prevPrompts, openSidebar, setOpenSidebar} = useContext(Context)
-    let userStorage = localStorage.getItem('User')
-    const user = userStorage.replace(/["\\]/g, "")
+    const {
+        currentChat,
+        onSent,
+        loading,
+        resultData,
+        userPrompt,
+        setUserPrompt,
+        openSidebar,
+        setOpenSidebar
+    } = useContext(Context);
 
-const handleKeyDown = (e) => {
-    // 1. Comprueba si la tecla presionada es 'Enter'
-    if (e.key === 'Enter') {
-        // 2. Opcional: Evita el comportamiento predeterminado (como saltos de línea en <textarea>)
-        e.preventDefault(); 
-        
-        // 3. Ejecuta la función de envío
-        onSent(); 
-        setUserPrompt('')
-    }
-};
+    const userStorage = localStorage.getItem("User");
+    const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
 
-useEffect(() => {
-        if (resultData && resultData.length > 0) {
-            
+    const handleKeyDown = e => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            onSent();
         }
-    }, [resultData]);
+    };
 
-{
-  return (
-    <div className="main">
-      <div className="nav">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" onClick={() => setOpenSidebar(!openSidebar)} fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" className="MenuMobile">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-  </svg>
+    return (
+        <div className="main">
+            <div className="nav">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    onClick={() => setOpenSidebar(!openSidebar)}
+                    fill="none" viewBox="0 0 24 24"
+                    strokeWidth="1.5" stroke="currentColor"
+                    className="MenuMobile">
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                </svg>
 
-        <p className="Title">Gemini</p>
-        <img src={assets.user_icon} alt="user" />
-      </div>
+                <p className="Title">Gemini</p>
+                <img src={assets.user_icon} alt="user" />
+            </div>
 
-      <div className="main-container">
-                {/* 💡 SOLUCIÓN CLAVE: Si hay resultados (o historial), mostrarlo */}
-                {!showResult ? 
+            <div className="main-container">
+                {!currentChat || currentChat.messages.length === 0 ? (
                     <>
                         <div className="greet">
                             <span>Hello, {user}</span>
-                            <p>How can I help you</p>
+                            <p>How can I help you?</p>
                         </div>
+
                         <div className="cards">
-                            <div className="card" onClick={() => handleCardClick('Suggest ideas to use IA in the best way possible')}>
-                                <p>Suggest ideas to use IA in the best way possible</p>
-                                <img src={assets.compass_icon} alt="compass" />
+                            <div className="card" onClick={() => onSent("Suggest ideas to use AI effectively")}>
+                                <p>Suggest ideas to use AI effectively</p>
+                                <img src={assets.compass_icon} alt="" />
                             </div>
-                            <div className="card" onClick={() => handleCardClick('1 Month workout routine to be in your best shape')}>
-                                <p>1 Month workout routine to be in your best shape</p>
-                                <img src={assets.bulb_icon} alt="bulb" />
+
+                            <div className="card" onClick={() => onSent("1 month workout routine to get in shape")}>
+                                <p>1 month workout routine to get in shape</p>
+                                <img src={assets.bulb_icon} alt="" />
                             </div>
-                            <div className="card" onClick={() => handleCardClick('Create an history about dogs and cats')}>
-                                <p>Create an history about dogs and cats</p>
-                                <img src={assets.message_icon} alt="message" />
+
+                            <div className="card" onClick={() => onSent("Create a story about dogs and cats")}>
+                                <p>Create a story about dogs and cats</p>
+                                <img src={assets.message_icon} alt="" />
                             </div>
-                            <div className="card" onClick={() => handleCardClick('Create a simple tetris game with Python')}>
-                                <p>Create a simple tetris game with Python</p>
-                                <img src={assets.code_icon} alt="code" />
+
+                            <div className="card" onClick={() => onSent("Create a simple Tetris game in Python")}>
+                                <p>Create a simple Tetris game in Python</p>
+                                <img src={assets.code_icon} alt="" />
                             </div>
                         </div>
                     </>
-                : 
-                    // 💡 NUEVO CÓDIGO: Mapear sobre prevPrompts para mostrar cada mensaje
+                ) : (
                     <div className="result">
-                        {prevPrompts.map((item, index) => {
-                            if (item.role === 'user') {
-                                return (
-                                    <div key={index} className="result-title user-message">
-                                        <img src={assets.user_icon} alt="User" />
-                                        <p>{item.text}</p>
-                                    </div>
-                                );
-                            } else { // role === 'model'
-                                // Si es la última respuesta Y está cargando, usa resultData (animado)
-                                // De lo contrario, muestra el texto completo de la respuesta de la IA
-                                const isLastModelMessage = index === prevPrompts.length - 1 && loading;
-                                return (
-                                    <div key={index} className="result-data ai-message">
-                                        <img src={assets.gemini_icon} alt="AI" />
-                                        {isLastModelMessage ? 
-                                            // Muestra el loader si aún está cargando la última respuesta
-                                            <>
-                                                {loading && resultData.length === 0 ? (
-                                                    <div className="loader">
-                                                        <hr /><hr /><hr />
-                                                    </div>
-                                                ) : (
-                                                    <p dangerouslySetInnerHTML={{ __html: resultData }}></p>
-                                                )}
-                                            </>
-                                            : 
-                                            // Si no es la última respuesta o ya terminó de cargar, muestra el texto completo
-                                            <p dangerouslySetInnerHTML={{ __html: item.text }}></p>
-                                        }
-                                    </div>
-                                );
-                            }
-                        })}
-                        {/* // Si quieres mostrar un loader genérico mientras la IA escribe la última respuesta,
-                            // podrías añadirlo aquí, pero la lógica de arriba ya lo maneja
-                            {loading && prevPrompts.length > 0 && prevPrompts[prevPrompts.length - 1].role === 'user' ? (
-                                <div className="result-data ai-message">
-                                    <img src={assets.gemini_icon} alt="AI" />
-                                    <div className="loader">
-                                        <hr /><hr /><hr />
-                                    </div>
-                                </div>
-                            ) : null} 
-                        */}
+                        {currentChat.messages.map((msg, i) => (
+                            <div key={i}
+                                className={msg.role === "user" ? "result-title user-message" : "result-data ai-message"}
+                            >
+                                <img
+                                    src={msg.role === "user" ? assets.user_icon : assets.gemini_icon}
+                                    alt=""
+                                />
+
+                                {msg.role === "model" && i === currentChat.messages.length - 1 && loading ? (
+                                    resultData.length === 0 ? (
+                                        <div className="loader"><hr /><hr /><hr /></div>
+                                    ) : (
+                                        <p dangerouslySetInnerHTML={{ __html: resultData }}></p>
+                                    )
+                                ) : (
+                                    <p dangerouslySetInnerHTML={{ __html: msg.text }}></p>
+                                )}
+                            </div>
+                        ))}
                     </div>
-                }
+                )}
+            </div>
 
-      <div className="main-bottom">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Enter prompt here"
-            onChange={(e) => setUserPrompt(e.target.value)}
-            value={userPrompt}
-            onKeyDown={handleKeyDown}
-          />
-          <div>
-            <img src={assets.gallery_icon} alt="gallery" />
-            <img src={assets.mic_icon} alt="mic" />
-            {userPrompt? <img src={assets.send_icon} alt="send" onClick={() => onSent()}/> : null  }
-          </div>
+            <div className="main-bottom">
+                <div className="search-box">
+                    <input
+                        type="text"
+                        placeholder="Enter prompt here"
+                        value={userPrompt}
+                        onChange={(e) => setUserPrompt(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                    />
+
+                    <div>
+                        <img src={assets.gallery_icon} alt="" />
+                        <img src={assets.mic_icon} alt="" />
+
+                        {userPrompt.length > 0 && (
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                onClick={() => onSent()}
+                                fill="none" viewBox="0 0 24 24"
+                                strokeWidth="1.5" stroke="currentColor"
+                                className="send-icon">
+                                <path strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>
+                        )}
+                    </div>
+                </div>
+
+                <p className="bottom-info">
+                    Gemini may display incorrect information. Always verify important facts.
+                </p>
+            </div>
         </div>
+    );
+};
 
-        <p className="bottom-info">
-          Gemini, and any other LLM may display incorrect information. Please
-          double check important info.
-        </p>
-      </div>
-    </div>
-    </div>
-  );
-    
-
-}}
-
-
-export default Main
+export default Main;

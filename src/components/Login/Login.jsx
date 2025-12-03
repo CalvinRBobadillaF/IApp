@@ -13,12 +13,7 @@ const Login = () => {
         localStorage.setItem('User', JSON.stringify(user))
         window.location.reload()
         
-/*
-        if (user !== '' && key !== '') {
-            setLogged(true)
-        } else {
-            alert('Ha ocurrido un error tratando de ingresar.')
-        }*/
+
 
     }
 

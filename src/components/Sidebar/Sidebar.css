@@ -24,6 +24,13 @@
     color: white;
 }
 
+.title {
+    font-size: 16px;
+    color: white;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
 .sidebar .new-chat {
     margin-top: 35px;
     display: inline-flex;
@@ -82,9 +89,15 @@
     cursor: pointer;
 }
 
+.delete-svg {
+    color: red;
+    width: 20px;
+    height: 20px;
+}
 
-
-
+.delete-svg:hover {
+    background-color: #242127;
+}
 
 @media (max-width: 600px) {
     
@@ -101,6 +114,7 @@
     .sidebar.open {
     display: inline-flex;
     height: 100%;
+    z-index: 10;
     
     
 }
