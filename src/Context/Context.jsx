@@ -14,6 +14,8 @@ const loadState = (key, defaultValue) => {
 
 const ContextProvider = ({ children }) => {
     const [openSidebar, setOpenSidebar] = useState(false);
+    const [userName, setUserName] = useState('')
+    const [geminiKey, setGeminiKey] = useState('')
 
     //Chat system:
     const [chats, setChats] = useState(loadState("chats", []));
@@ -158,6 +160,10 @@ const ContextProvider = ({ children }) => {
                 resultData,
                 openSidebar,
                 setOpenSidebar,
+                userName,
+                setUserName,
+                geminiKey,
+                setGeminiKey,
                 deleteChat
             }}
         >
