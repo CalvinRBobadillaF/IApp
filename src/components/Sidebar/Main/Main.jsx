@@ -2,6 +2,7 @@ import { useContext } from "react";
 import './Main.css';
 import { assets } from "../../../assets/assets";
 import { Context } from "../../../Context/Context";
+import Modal from "../../Modal/Modal";
 
 const Main = () => {
 
@@ -13,11 +14,15 @@ const Main = () => {
         userPrompt,
         setUserPrompt,
         openSidebar,
+        setOpenModal,
+        openModal,
         setOpenSidebar
     } = useContext(Context);
 
     const userStorage = localStorage.getItem("User");
     const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
+
+    
 
     const handleKeyDown = e => {
         if (e.key === "Enter") {
@@ -26,8 +31,12 @@ const Main = () => {
         }
     };
 
+    
+
     return (
+        
         <div className="main">
+            
             <div className="nav">
                 <svg xmlns="http://www.w3.org/2000/svg"
                     onClick={() => setOpenSidebar(!openSidebar)}
@@ -39,7 +48,7 @@ const Main = () => {
                 </svg>
 
                 <p className="Title">Gemini</p>
-                <img src={assets.user_icon} alt="user" />
+                <img src={assets.user_icon} alt="user" onClick={() => setOpenModal(!openModal)} />
             </div>
 
             <div className="main-container">
@@ -96,7 +105,10 @@ const Main = () => {
                         ))}
                     </div>
                 )}
+                
             </div>
+
+            {openModal == true ? <Modal/> : null}
 
             <div className="main-bottom">
                 <div className="search-box">

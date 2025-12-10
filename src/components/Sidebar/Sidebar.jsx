@@ -12,6 +12,8 @@ const Sidebar = () => {
         openSidebar,
         setOpenSidebar,
         deleteChat,
+        setOpenModal,
+        openModal
         
     } = useContext(Context);
 
@@ -92,7 +94,7 @@ const Sidebar = () => {
                     {openSidebar ? <p>Activity</p> : null}
                 </div>
 
-                <div className="bottom-item recent-entry">
+                <div className="bottom-item recent-entry" onClick={() => setOpenModal(!openModal)}>
                     <img src={assets.setting_icon} alt="" />
                     {openSidebar ? <p>Settings</p> : null}
                 </div>

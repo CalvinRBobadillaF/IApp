@@ -16,6 +16,9 @@ const ContextProvider = ({ children }) => {
     const [openSidebar, setOpenSidebar] = useState(false);
     const [userName, setUserName] = useState('')
     const [geminiKey, setGeminiKey] = useState('')
+    const [openModal, setOpenModal] = useState(false)
+    const [theme, setTheme] = useState(false)
+    
 
     //Chat system:
     const [chats, setChats] = useState(loadState("chats", []));
@@ -164,7 +167,11 @@ const ContextProvider = ({ children }) => {
                 setUserName,
                 geminiKey,
                 setGeminiKey,
-                deleteChat
+                openModal,
+                setOpenModal,
+                deleteChat,
+                theme,
+                setTheme
             }}
         >
             {children}

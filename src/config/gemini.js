@@ -4,16 +4,19 @@
 const rawKey = localStorage.getItem("Gemini Key");
 const apiKey = rawKey?.replace(/["\\]/g, "");
 
+const userModel = localStorage.getItem('Model')
+const model = userModel?.replace(/["\\]/g, "")
+
 
 import { GoogleGenAI } from "@google/genai";
 
 async function main(prompt) {
   const ai = new GoogleGenAI({ apiKey: apiKey });
-  console.log(apiKey)
+  
     try {
   
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: model,
     contents: prompt,
 config: { 
     logging_config: {

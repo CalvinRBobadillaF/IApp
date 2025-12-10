@@ -17,7 +17,7 @@ const Login = () => {
 
     }
 
-    console.log('Usuario:', userName, 'Key:', geminiKey)
+    
 
     return (
         <div className="login-container">
