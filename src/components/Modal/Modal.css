@@ -18,6 +18,15 @@
   z-index: 15;
 }
 
+.Modal svg {
+  width: 35px;
+  height: 35px;
+  position: absolute;
+  left: 10px;
+  top: 20px;
+  
+}
+
 /* Imagen usuario */
 .Modal img {
   width: 95px;

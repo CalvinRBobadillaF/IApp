@@ -33,6 +33,7 @@
 
 .sidebar .new-chat {
     margin-top: 35px;
+    margin-bottom: 10px;
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -49,6 +50,11 @@
     display: flex;
     flex-direction: column;
     animation: fadeIn, 1s;
+}
+
+.recent svg {
+    width: 20px;
+    height: 20px;
 }
 
 .sidebar .recent-title {
@@ -68,10 +74,9 @@
     
 }
 
-.sidebar .recent-entry img {
-    background-color: white;
-    border-radius: 50%;
-    
+.setting-svg {
+    width: 20px;
+    height: 20px;
 }
 
 .sidebar .recent-entry:hover {
