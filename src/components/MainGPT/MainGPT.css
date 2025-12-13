@@ -1,12 +1,26 @@
-.main {
+:root{
+  /* Paleta principal */
+  --deep: #100f11;      /* fondo oscuro */
+  --panel: #625f54;     /* panel / border */
+  --moss: #5c582d;      /* acento principal */
+  --muted: #999f92;     /* texto secundario / fondo suave */
+  --olive: #8f9265;     /* acento secundario */
+  --brown-deep: #493925;/* detalles oscuros */
+  --warm-brown: #896f57;/* detalles cálidos */
+  --sage: #7a8462;      /* matiz medio */
+}
+
+
+.main-gpt {
     flex: 1;
     min-height: 100vh;
     padding-bottom: 15vh;
     position: relative;
-    color: white;
+      background-color: #06000f;
+  color: var(--muted);
 }
 
-.main .nav {
+.main-gpt .nav-gpt {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -16,28 +30,45 @@
 
 }
 
-.MenuMobile {
+.MenuMobile-gpt {
     width: 35px;
     color: white;
 }
 
-.Title {
+.Title-gpt {
     color: #c4c7c5;
 }
 
-.main .nav img {
+.main-gpt .nav-gpt img {
     width: 40px;
     border-radius: 50%;
 
 }
 
-.main-container {
+.main-container-gpt {
     max-width: 900px;
     margin: auto;
 
 }
 
-.main .greet {
+.title-div-gpt {
+    display: flex;
+    flex-direction: row;
+    
+}
+
+.title-div-gpt svg:hover {
+background-color: #2e2e2e;
+}
+
+.title-div-gpt svg{
+    color: white;
+    width: 30px;
+    height: 30px;
+    margin-left: 10px;
+    border-radius: 50%;
+}
+.main-gpt .greet-gpt {
     margin: 50px 0px;
     font-size: 56px;
     color: #c4c7c5;
@@ -51,14 +82,15 @@
     -webkit-text-fill-color: transparent;
 }*/
 
-.main .cards {
+.main-gpt .cards-gpt {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(180px, 1fr));
     gap: 15px;
     padding: 20px;
+    
 }
 
-.main .card {
+.main-gpt .card-gpt {
     height: 200px;
     padding: 15px;
     background-color: #2e2e2e;
@@ -67,7 +99,7 @@
     cursor: pointer;
 }
 
-.main .card img {
+.main-gpt .card-gpt img {
     width: 35px;
     padding: 5px;
     position: absolute;
@@ -78,17 +110,17 @@
     right: 10px;
 }
 
-.main .card p{
+.main-gpt .card-gpt p{
     color: #c0bfbf;
     font-size: 17px;
 }
 
-.main .card:hover {
+.main-gpt .card-gpt:hover {
     background-color: rgb(33, 33, 43);
     
 }
 
-.main .main-bottom {
+.main-gpt .main-bottom-gpt {
     position: absolute;
     bottom: 0;
     display: grid;
@@ -101,25 +133,26 @@
     
 }
 
-.main .search-box {
+.main-gpt .search-box-gpt {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    background-color: #2c2c2c;
+    background-color: #261c2e;
     padding: 10px 20px;
     border-radius: 50px;
     width: 50vw;
 }
 
-.main .search-box img {
+.main-gpt .search-box-gpt img {
     width: 24px;
     cursor: pointer;
 }
 
-.search-box input {
+.search-box-gpt input {
     flex: 1;
     background: transparent;
+    
     border: none;
     outline: none;
     padding: 8px;
@@ -128,37 +161,37 @@
     
 }
 
-.search-box div {
+.search-box-gpt div {
     display: flex;
     align-items: center;
     gap: 15px;
 }
 
-.main .bottom-info {
+.main-gpt .bottom-info-gpt {
     font-size: 13px;
     margin: 15px auto;
     text-align: center;
     font-weight: 700;
 }
 
-.result{
+.result-gpt{
     padding: 0px 5%;
     max-height: 70vh;
     
 }
 
-.result::-webkit-scrollbar {
+.result-gpt::-webkit-scrollbar {
     display: none;
 }
 
-.result-title {
+.result-title-gpt {
     margin: 40px 0px;
     display: flex;
     align-items: center;
     gap: 20px;
 }
 
-.result-title p {   
+.result-title-gpt p {   
     font-size: 17px;
     font-weight: 300;
     line-height: 1.8;
@@ -168,13 +201,13 @@
     color: white;
 }
 
-.result img {
+.result-gpt img {
     width: 40px;
     border-radius: 50%;
 
 }
 
-.result-data {
+.result-data-gpt {
     display: flex;
     align-items: start;
     gap: 20px;
@@ -182,7 +215,7 @@
     
 }
 
-.loader {
+.loader-gpt {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -190,7 +223,7 @@
 
 }
 
-.loader hr{
+.loader-gpt hr{
     border-radius: 40px;
     border: none;
     background-color: #181E2F;
@@ -200,11 +233,11 @@
     animation: loader 3s infinite linear
 }
 
-.MenuMobile {
+.MenuMobile-gpt {
     display: none;
 }
 
-.result-data p {
+.result-data-gpt p {
     color: white;
     font-size: 17px;
     font-weight: 300;
@@ -213,17 +246,23 @@
     border-radius: 8px;
     padding: 20px;
     max-width: 600px;
+    background: linear-gradient(180deg, rgba(22,20,22,0.85), rgba(16,15,17,0.9));
+  border: 3px solid rgba(98,95,84,0.25); /* --panel */
+  box-shadow: 0 8px 30px rgba(16,15,17,0.6);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: #fff;
 }
 
-.main-container {
+.main-container-gpt {
     overflow-y: scroll;
 }
 
-.main-container::-webkit-scrollbar {
+.main-container-gpt::-webkit-scrollbar {
     display: none;
 }
 
-.send-icon {
+.send-icon-gpt {
     color: white;
     width: 20px;
     height: 20px;
@@ -232,28 +271,28 @@
 
 
 @media (max-width: 600px) {
-    .MenuMobile {
+    .MenuMobile-gpt {
         display: block;
     }
 
-    .greet span{
+    .greet-gpt span{
         font-size: 40px;
         color: rgb(141, 140, 140);
     }
-    .greet p {
+    .greet-gpt p {
         font-size: 40px;
         color: rgb(141, 140, 140);
     }
-    .main .card {
+    .main-gpt .card-gpt {
         height: 100px;
     padding: 10px;
     }
 
-    .main .search-box {
+    .main-gpt .search-box-gpt {
         width: 90vw;
     }
 
-   .result-data p {
+   .result-data-gpt p {
     max-width: 75vw;
     
    }

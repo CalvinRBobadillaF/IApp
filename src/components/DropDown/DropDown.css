@@ -1,0 +1,34 @@
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-option {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2a2a2a;
+  color: white;
+  transition: background 0.2s;
+}
+
+.radio-option:nth-child(1) {
+  background-color: #560bad;
+}
+
+.radio-option:nth-child(2) {
+  background-color: #3a86ff;
+}
+
+.radio-option:nth-child(3) {
+  background-color: #eb5e28;
+}
+
+.radio-option:nth-child(4) {
+  background-color: #800f2f;
+}
+
+.radio-option:hover {
+  background: #3a3a3a;
+}

@@ -1,0 +1,137 @@
+
+.sidebar-gpt {
+    min-height: 100vh;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #0c0518;
+    padding: 25px 15px;
+    width: auto;
+}
+
+.sidebar-gpt img {
+    width: 20px;
+    
+    color: white;
+}
+
+
+.sidebar-gpt .MenuPC-gpt {
+    display: block;
+    margin-left: 10px;
+    cursor: pointer;
+    width: 35px;
+    color: white;
+}
+
+.title-gpt {
+    font-size: 16px;
+    color: white;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.sidebar-gpt .new-chat-gpt {
+    margin-top: 35px;
+    margin-bottom: 10px;
+    
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+      
+    border: 1px solid rgba(139,83,217,0.12);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    color: white;
+    background-color: #04011d;
+}
+
+.sidebar-gpt .recent-gpt {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn, 1s;
+}
+
+.recent-gpt svg {
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-gpt .recent-title {
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.sidebar-gpt .recent-entry-gpt {
+    display: flex;
+    align-items: start;
+    gap: 10px;
+    padding: 10px;
+    padding-right: 40px;
+    border-radius: 50px;
+    color: #c4c7c5;
+    cursor: pointer;
+    
+}
+
+.setting-svg {
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-gpt .recent-entry:hover {
+    background-color: #242127;
+}
+
+.sidebar-gpt .bottom-gpt {
+    display: flex;
+    flex-direction: column;
+    
+}
+
+.sidebar-gpt .bottom-item-gpt {
+    padding-right: 10px;
+    cursor: pointer;
+}
+
+.delete-svg-gpt {
+    color: rgb(111, 0, 255);
+    width: 20px;
+    height: 20px;
+}
+
+.delete-svg-gpt:hover {
+    background-color: #242127;
+}
+
+.bottom-gpt svg {
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 600px) {
+    
+
+    .sidebar-gpt  {
+        display: none;
+        min-width: 68vw;
+        
+        
+    }
+
+    
+
+    .sidebar-gpt.open {
+    display: inline-flex;
+    height: 100%;
+    z-index: 10;
+    
+    
+}
+
+.sidebar-gpt .MenuPC-gpt {
+    display: none;
+}
+}

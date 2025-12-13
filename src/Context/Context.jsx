@@ -16,12 +16,15 @@ const ContextProvider = ({ children }) => {
     const [openSidebar, setOpenSidebar] = useState(false);
     const [userName, setUserName] = useState('')
     const [geminiKey, setGeminiKey] = useState('')
+    const [chatGPTKey, setChatGPTKey] = useState('')
     const [openModal, setOpenModal] = useState(false)
     const [theme, setTheme] = useState(false)
-    
+    const [models, setModels] = useState(false)
+    const [modelFeature, setModelFeature] = useState('Gemini')
 
     //Chat system:
     const [chats, setChats] = useState(loadState("chats", []));
+   // const [GPTChat, setGPTChat] = useState
     const [currentChatId, setCurrentChatId] = useState(loadState("currentChatId", null));
 
     const [userPrompt, setUserPrompt] = useState("");
@@ -33,6 +36,8 @@ const ContextProvider = ({ children }) => {
         localStorage.setItem("chats", JSON.stringify(chats));
         localStorage.setItem("currentChatId", JSON.stringify(currentChatId));
     }, [chats, currentChatId]);
+
+    
 
 
     // Create new chat system:
@@ -171,6 +176,10 @@ const ContextProvider = ({ children }) => {
                 setOpenModal,
                 deleteChat,
                 theme,
+                models,
+                setModels,
+                modelFeature,
+                setModelFeature,
                 setTheme
             }}
         >

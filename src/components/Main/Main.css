@@ -1,0 +1,292 @@
+.main {
+    flex: 1;
+    min-height: 100vh;
+    padding-bottom: 15vh;
+    position: relative;
+    color: white;
+}
+
+.main .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 22px;
+    padding: 20px;
+    color: #272626;
+
+}
+
+.MenuMobile {
+    width: 35px;
+    color: white;
+}
+
+.Title {
+    color: #c4c7c5;
+}
+
+.main .nav img {
+    width: 40px;
+    border-radius: 50%;
+
+}
+
+.main-container {
+    max-width: 900px;
+    margin: auto;
+
+}
+
+.title-div {
+    display: flex;
+    flex-direction: row;
+    
+}
+
+.title-div svg:hover {
+background-color: #2e2e2e;
+}
+
+.title-div svg{
+    color: white;
+    width: 30px;
+    height: 30px;
+    margin-left: 10px;
+    border-radius: 50%;
+}
+.main .greet {
+    margin: 50px 0px;
+    font-size: 56px;
+    color: #c4c7c5;
+    font-weight: 500;
+    padding: 20px;
+}
+/*
+.main .greet span {
+    background: -webkit-linear-gradient(16deg, #4b90ff #ff5546);
+    webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}*/
+
+.main .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(180px, 1fr));
+    gap: 15px;
+    padding: 20px;
+}
+
+.main .card {
+    height: 200px;
+    padding: 15px;
+    background-color: #2e2e2e;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+}
+
+.main .card img {
+    width: 35px;
+    padding: 5px;
+    position: absolute;
+    color: white;
+    background-color: #dadada;
+    border-radius: 20px;
+    bottom: 10px;
+    right: 10px;
+}
+
+.main .card p{
+    color: #c0bfbf;
+    font-size: 17px;
+}
+
+.main .card:hover {
+    background-color: rgb(33, 33, 43);
+    
+}
+
+.main .main-bottom {
+    position: absolute;
+    bottom: 0;
+    display: grid;
+    place-content: center;
+    width: 100%;
+    
+    padding: 0px 20px;
+    margin: auto;
+    
+    
+}
+
+.main .search-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background-color: #2c2c2c;
+    padding: 10px 20px;
+    border-radius: 50px;
+    width: 50vw;
+}
+
+.main .search-box img {
+    width: 24px;
+    cursor: pointer;
+}
+
+.search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 8px;
+    font-size: 18px;
+    color: white;
+    
+}
+
+.search-box div {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.main .bottom-info {
+    font-size: 13px;
+    margin: 15px auto;
+    text-align: center;
+    font-weight: 700;
+}
+
+.result{
+    padding: 0px 5%;
+    max-height: 70vh;
+    
+}
+
+.result::-webkit-scrollbar {
+    display: none;
+}
+
+.result-title {
+    margin: 40px 0px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.result-title p {   
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.8;
+    background-color: #1A1A1D;
+    border-radius: 8px;
+    padding: 15px;
+    color: white;
+}
+
+.result img {
+    width: 40px;
+    border-radius: 50%;
+
+}
+
+.result-data {
+    display: flex;
+    align-items: start;
+    gap: 20px;
+    
+    
+}
+
+.loader {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+}
+
+.loader hr{
+    border-radius: 40px;
+    border: none;
+    background-color: #181E2F;
+    background: linear-gradient(to right, #9ed7ff, white, #9ed7ff);
+    background-size: 800px 50px;
+    height: 20px;
+    animation: loader 3s infinite linear
+}
+
+.MenuMobile {
+    display: none;
+}
+
+.result-data p {
+    color: white;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.8;
+    background-color:  #1A1A1D;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 600px;
+}
+
+.main-container {
+    overflow-y: scroll;
+}
+
+.main-container::-webkit-scrollbar {
+    display: none;
+}
+
+.send-icon {
+    color: white;
+    width: 20px;
+    height: 20px;
+}
+
+
+
+@media (max-width: 600px) {
+    .MenuMobile {
+        display: block;
+    }
+
+    .greet span{
+        font-size: 40px;
+        color: rgb(141, 140, 140);
+    }
+    .greet p {
+        font-size: 40px;
+        color: rgb(141, 140, 140);
+    }
+    .main .card {
+        height: 100px;
+    padding: 10px;
+    }
+
+    .main .search-box {
+        width: 90vw;
+    }
+
+   .result-data p {
+    max-width: 75vw;
+    
+   }
+
+    
+}
+
+@keyframes loader {
+    0% {
+        background-position: -800px 0px;
+
+    }
+    100% {
+        background-position: 800px 0px;
+    }
+}
+
+
+

@@ -1,10 +1,14 @@
-import { useContext } from "react";
-import './Main.css';
-import { assets } from "../../../assets/assets";
-import { Context } from "../../../Context/Context";
-import Modal from "../../Modal/Modal";
+import React, { useContext, useState, useRef, useEffect } from "react";
+import './MainGPT.css';
+import { assets } from "../../assets/assets";
+import { Context } from "../../Context/Context";
+import Modal from "../Modal/Modal";
+import DropDown from "../DropDown/DropDown";
 
-const Main = () => {
+
+
+
+const MainGPT = () => {
 
     const {
         currentChat,
@@ -16,6 +20,8 @@ const Main = () => {
         openSidebar,
         setOpenModal,
         openModal,
+        models,
+        setModels,
         setOpenSidebar
     } = useContext(Context);
 
@@ -35,57 +41,67 @@ const Main = () => {
 
     return (
         
-        <div className="main">
+        <div className="main-gpt">
             
-            <div className="nav">
+            <div className="nav-gpt">
                 <svg xmlns="http://www.w3.org/2000/svg"
                     onClick={() => setOpenSidebar(!openSidebar)}
                     fill="none" viewBox="0 0 24 24"
                     strokeWidth="1.5" stroke="currentColor"
-                    className="MenuMobile">
+                    className="MenuMobile-gpt">
                     <path strokeLinecap="round" strokeLinejoin="round"
                         d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
 
-                <p className="Title">Gemini</p>
+
+<div className="title-div-gpt"> 
+    <p className="Title-gpt">ChatGPT </p> 
+    <svg xmlns="http://www.w3.org/2000/svg" onClick={() => setModels(!models)} fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"> <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /> 
+    </svg>
+
+    {models ? <DropDown /> : null}
+
+      </div>
+
+
                 <img src={assets.user_icon} alt="user" onClick={() => setOpenModal(!openModal)} />
             </div>
 
-            <div className="main-container">
+            <div className="main-container-gpt">
                 {!currentChat || currentChat.messages.length === 0 ? (
                     <>
-                        <div className="greet">
+                        <div className="greet-gpt">
                             <span>Hello, {user}</span>
                             <p>How can I help you?</p>
                         </div>
 
-                        <div className="cards">
-                            <div className="card" onClick={() => onSent("Suggest ideas to use AI effectively")}>
+                        <div className="cards-gpt">
+                            <div className="card-gpt" onClick={() => onSent("Suggest ideas to use AI effectively")}>
                                 <p>Suggest ideas to use AI effectively</p>
                                 <img src={assets.compass_icon} alt="" />
                             </div>
 
-                            <div className="card" onClick={() => onSent("1 month workout routine to get in shape")}>
+                            <div className="card-gpt" onClick={() => onSent("1 month workout routine to get in shape")}>
                                 <p>1 month workout routine to get in shape</p>
                                 <img src={assets.bulb_icon} alt="" />
                             </div>
 
-                            <div className="card" onClick={() => onSent("Create a story about dogs and cats")}>
+                            <div className="card-gpt" onClick={() => onSent("Create a story about dogs and cats")}>
                                 <p>Create a story about dogs and cats</p>
                                 <img src={assets.message_icon} alt="" />
                             </div>
 
-                            <div className="card" onClick={() => onSent("Create a simple Tetris game in Python")}>
+                            <div className="card-gpt" onClick={() => onSent("Create a simple Tetris game in Python")}>
                                 <p>Create a simple Tetris game in Python</p>
                                 <img src={assets.code_icon} alt="" />
                             </div>
                         </div>
                     </>
                 ) : (
-                    <div className="result">
+                    <div className="result-gpt">
                         {currentChat.messages.map((msg, i) => (
                             <div key={i}
-                                className={msg.role === "user" ? "result-title user-message" : "result-data ai-message"}
+                                className={msg.role === "user" ? "result-title-gpt user-message-gpt" : "result-data-gpt ai-message-gpt"}
                             >
                                 <img
                                     src={msg.role === "user" ? assets.user_icon : assets.gemini_icon}
@@ -94,7 +110,7 @@ const Main = () => {
 
                                 {msg.role === "model" && i === currentChat.messages.length - 1 && loading ? (
                                     resultData.length === 0 ? (
-                                        <div className="loader"><hr /><hr /><hr /></div>
+                                        <div className="loader-gpt"><hr /><hr /><hr /></div>
                                     ) : (
                                         <p dangerouslySetInnerHTML={{ __html: resultData }}></p>
                                     )
@@ -112,8 +128,8 @@ const Main = () => {
 
             {openModal == true ? <Modal/> : null}
 
-            <div className="main-bottom">
-                <div className="search-box">
+            <div className="main-bottom-gpt">
+                <div className="search-box-gpt">
                     <input
                         type="text"
                         placeholder="Enter prompt here"
@@ -131,7 +147,7 @@ const Main = () => {
                                 onClick={() => onSent()}
                                 fill="none" viewBox="0 0 24 24"
                                 strokeWidth="1.5" stroke="currentColor"
-                                className="send-icon">
+                                className="send-icon-gpt">
                                 <path strokeLinecap="round"
                                     strokeLinejoin="round"
                                     d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
@@ -140,7 +156,7 @@ const Main = () => {
                     </div>
                 </div>
 
-                <p className="bottom-info">
+                <p className="bottom-info-gpt">
                     Gemini may display incorrect information. Always verify important facts.
                 </p>
             </div>
@@ -148,4 +164,5 @@ const Main = () => {
     );
 };
 
-export default Main;
+
+export default MainGPT;
