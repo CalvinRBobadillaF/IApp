@@ -5,14 +5,15 @@ import { assets } from "../../assets/assets";
 
 
 const DropDown = () => {
-  const {models, setModelFeature, modelFeature} = useContext(Context)
+  const {models, setModelFeature,  setModels} = useContext(Context)
   const ref = useRef(null);
+
 
   // Cerrar al hacer click fuera
   useEffect(() => {
     const handleClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
+        setModels(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
@@ -40,7 +41,7 @@ const DropDown = () => {
             zIndex: 100,
           }}
         >
-          <div className="radio-option" onClick={() => setModelFeature('ChatGPT')}> ChatGPT</div>
+          <div className="radio-option" onClick={() => setModelFeature('GPT') } > ChatGPT</div>
           <div className="radio-option">DeepSeek</div>
           <div className="radio-option">Claude</div>
           <div className="radio-option" onClick={() => setModelFeature('Gemini')}>Gemini</div>

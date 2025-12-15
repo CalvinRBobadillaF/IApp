@@ -161,6 +161,7 @@ background-color: #2e2e2e;
     
 }
 
+
 .search-box-gpt div {
     display: flex;
     align-items: center;
@@ -235,6 +236,12 @@ background-color: #2e2e2e;
 
 .MenuMobile-gpt {
     display: none;
+}
+
+.result-data-gpt img  {
+    background-color: white;
+    border-radius: 50% ;
+    
 }
 
 .result-data-gpt p {

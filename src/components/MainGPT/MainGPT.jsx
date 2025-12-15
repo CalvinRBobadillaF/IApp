@@ -21,13 +21,14 @@ const MainGPT = () => {
         setOpenModal,
         openModal,
         models,
+        
         setModels,
         setOpenSidebar
     } = useContext(Context);
 
     const userStorage = localStorage.getItem("User");
     const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
-
+    console.log(openModal)
     
 
     const handleKeyDown = e => {
@@ -76,23 +77,25 @@ const MainGPT = () => {
                         </div>
 
                         <div className="cards-gpt">
-                            <div className="card-gpt" onClick={() => onSent("Suggest ideas to use AI effectively")}>
-                                <p>Suggest ideas to use AI effectively</p>
-                                <img src={assets.compass_icon} alt="" />
-                            </div>
-
-                            <div className="card-gpt" onClick={() => onSent("1 month workout routine to get in shape")}>
-                                <p>1 month workout routine to get in shape</p>
+                            <div className="card-gpt" onClick={() => onSent("Give me a fun fact")}>
+                                <p>Give me a fun fact!</p>
                                 <img src={assets.bulb_icon} alt="" />
+                                
                             </div>
 
-                            <div className="card-gpt" onClick={() => onSent("Create a story about dogs and cats")}>
-                                <p>Create a story about dogs and cats</p>
+                            <div className="card-gpt" onClick={() => onSent("How wins between Anakin and Luke Skywalker")}>
+                                <p>who wins between Anakin and Luke Skywalker?</p>
                                 <img src={assets.message_icon} alt="" />
                             </div>
 
-                            <div className="card-gpt" onClick={() => onSent("Create a simple Tetris game in Python")}>
-                                <p>Create a simple Tetris game in Python</p>
+                            <div className="card-gpt" onClick={() => onSent("Technological advances that we may have in 2050")}>
+                                <p>Technological advances that we may have in 2050</p>
+                                <img src={assets.compass_icon} alt="" />
+                                
+                            </div>
+
+                            <div className="card-gpt" onClick={() => onSent("Create a landing page of a Yaroa commerce with JS, Html and CSS")}>
+                                <p>Create a landing page of a Yaroa commerce with JS, Html and CSS</p>
                                 <img src={assets.code_icon} alt="" />
                             </div>
                         </div>
@@ -104,7 +107,7 @@ const MainGPT = () => {
                                 className={msg.role === "user" ? "result-title-gpt user-message-gpt" : "result-data-gpt ai-message-gpt"}
                             >
                                 <img
-                                    src={msg.role === "user" ? assets.user_icon : assets.gemini_icon}
+                                    src={msg.role === "user" ? assets.user_icon : assets.chatgpt_icon}
                                     alt=""
                                 />
 
@@ -157,7 +160,7 @@ const MainGPT = () => {
                 </div>
 
                 <p className="bottom-info-gpt">
-                    Gemini may display incorrect information. Always verify important facts.
+                    ChatGPT may display incorrect information. Always verify important info.
                 </p>
             </div>
         </div>

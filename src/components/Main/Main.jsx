@@ -22,11 +22,14 @@ const Main = () => {
         openModal,
         models,
         setModels,
+        
+        modelFeature,
         setOpenSidebar
     } = useContext(Context);
 
     const userStorage = localStorage.getItem("User");
     const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
+    console.log(openModal)
 
     
 

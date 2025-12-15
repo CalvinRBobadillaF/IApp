@@ -24,7 +24,7 @@ function App() {
     )
   }
 
-  if (modelFeature == 'ChatGPT') {
+  if (modelFeature == 'GPT') {
     return(
       <>
       <SidebarGPT />

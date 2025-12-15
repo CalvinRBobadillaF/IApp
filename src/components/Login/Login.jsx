@@ -3,14 +3,16 @@ import './Login.css'
 import { Context } from '../../Context/Context'
 
 const Login = () => {
-    let { userName, setUserName, geminiKey, setGeminiKey, setLogged, logged } = useContext(Context)
+    let { userName, setUserName, geminiKey, setGeminiKey, setLogged, logged, GPTKey, setGPTKey } = useContext(Context)
     
 
     const setData = () => {
         let user = userName
         let key = geminiKey
+        let GPT = GPTKey
         localStorage.setItem('Gemini Key', JSON.stringify(key))
         localStorage.setItem('User', JSON.stringify(user))
+        localStorage.setItem('GPT Key', JSON.stringify(GPT)) 
         window.location.reload()
         
 
@@ -32,6 +34,11 @@ const Login = () => {
                     type="text" 
                     placeholder="GeminiKey" 
                     onChange={(e) => setGeminiKey(e.target.value)}
+                />
+                <input 
+                    type="text" 
+                    placeholder="GPT Key" 
+                    onChange={(e) => setGPTKey(e.target.value)}
                 />
                 
             </div>

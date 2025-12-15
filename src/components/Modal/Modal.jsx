@@ -11,6 +11,7 @@ const Modal = () => {
     theme,
     setTheme,
     openModal,
+    modelFeature,
     setOpenModal
    } = useContext(Context)
 
@@ -22,20 +23,56 @@ const Modal = () => {
 
    }
 
+   const changeModelGPT = (modelName) => {
+    let model = modelName
+    localStorage.setItem('ModelGPT', JSON.stringify(model))
+   }
+
    
 
    const userModel = localStorage.getItem('Model')
 const model = userModel?.replace(/["\\]/g, "")
 
-if (userModel == undefined ) {
+const userModelGPT = localStorage.getItem('ModelGPT')
+const modelGPT = userModelGPT?.replace(/["\\]/g, "")
+
+if (userModel == undefined  ) {
     changeModel('gemini-2.5-flash')
 }
 
-   
+
+if (modelFeature == 'GPT') {
+    if (userModelGPT == undefined ) {
+    changeModel('gpt-5')
+}
+    return(
+    <div className='Modal'>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" onClick={() => setOpenModal(!openModal)} class="size-6">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+
+            <img src={assets.user_icon} alt="user"  />
+            <p className='user-name'>{user}</p>
+        
+        <div className='Modal-input'>
+            <input type="text"   placeholder={`Current model: ${modelGPT}`} />
+            <div className="radio-group" onClick={() => setTheme(!theme)}>
+  <div className="radio-option" onClick={() => changeModelGPT('gpt-5-nano')}>GPT-5 Nano </div>
+  <div className="radio-option" onClick={() => changeModelGPT('gpt-5.2')}>GPT 5.2 -</div>
+  <div className="radio-option" onClick={() => changeModelGPT('gpt-5-mini')}>GPT-5 Mini </div>
+  <div className="radio-option" onClick={() => changeModelGPT('gpt-5')}>GPT-5 </div>
+</div>
+
+
+        </div>
+        
+    </div>
+)
+}
 
 return(
     <div className='Modal'>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" onClick={() => setOpenModal(!openModal)} class="size-6">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" onClick={() => setOpenModal('none')} class="size-6">
     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
     </svg>
 
