@@ -3,7 +3,7 @@ import './Login.css'
 import { Context } from '../../Context/Context'
 
 const Login = () => {
-    let { userName, setUserName, geminiKey, setGeminiKey, setLogged, logged, GPTKey, setGPTKey } = useContext(Context)
+    let { userName, setUserName, geminiKey, setGeminiKey, GPTKey, setGPTKey } = useContext(Context)
     
 
     const setData = () => {
