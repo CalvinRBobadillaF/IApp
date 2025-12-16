@@ -5,9 +5,6 @@ import { Context } from "../../Context/Context";
 import Modal from "../Modal/Modal";
 import DropDown from "../DropDown/DropDown";
 
-
-
-
 const MainGPT = () => {
 
     const {
@@ -21,14 +18,13 @@ const MainGPT = () => {
         setOpenModal,
         openModal,
         models,
-        
         setModels,
         setOpenSidebar
     } = useContext(Context);
 
     const userStorage = localStorage.getItem("User");
     const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
-    console.log(openModal)
+    
     
 
     const handleKeyDown = e => {
@@ -39,7 +35,6 @@ const MainGPT = () => {
     };
 
     
-
     return (
         
         <div className="main-gpt">
@@ -72,8 +67,10 @@ const MainGPT = () => {
                 {!currentChat || currentChat.messages.length === 0 ? (
                     <>
                         <div className="greet-gpt">
-                            <span>Hello, {user}</span>
-                            <p>How can I help you?</p>
+                            <span>
+                                 Hello, <span className="user-name-gpt">{user}</span>
+                             </span>
+                             <p>How can I help you?</p>
                         </div>
 
                         <div className="cards-gpt">
@@ -83,7 +80,7 @@ const MainGPT = () => {
                                 
                             </div>
 
-                            <div className="card-gpt" onClick={() => onSent("How wins between Anakin and Luke Skywalker")}>
+                            <div className="card-gpt" onClick={() => onSent("who wins between Anakin and Luke Skywalker")}>
                                 <p>who wins between Anakin and Luke Skywalker?</p>
                                 <img src={assets.message_icon} alt="" />
                             </div>
@@ -124,7 +121,14 @@ const MainGPT = () => {
                             </div>
                             
                         ))}
+                        {loading && currentChat.messages.at(-1)?.role === "user" && (
+                                                <div className="result-data ai-message">
+                                                    <img src={assets.chatgpt_icon} alt="" />
+                                                    <div className="thinking">🌠Reasoning...</div>
+                                                </div>
+                                            )}
                     </div>
+                    
                 )}
                 
             </div>

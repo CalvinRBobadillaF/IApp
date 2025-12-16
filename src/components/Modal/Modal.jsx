@@ -57,10 +57,10 @@ if (modelFeature == 'GPT') {
         <div className='Modal-input'>
             <input type="text"   placeholder={`Current model: ${modelGPT}`} />
             <div className="radio-group" onClick={() => setTheme(!theme)}>
-  <div className="radio-option" onClick={() => changeModelGPT('gpt-5-nano')}>GPT-5 Nano </div>
-  <div className="radio-option" onClick={() => changeModelGPT('gpt-5.2')}>GPT 5.2 -</div>
-  <div className="radio-option" onClick={() => changeModelGPT('gpt-5-mini')}>GPT-5 Mini </div>
-  <div className="radio-option" onClick={() => changeModelGPT('gpt-5')}>GPT-5 </div>
+  <div className="radio-option-modal" onClick={() => changeModelGPT('gpt-5-nano')}>GPT-5 Nano</div>
+  <div className="radio-option-modal" onClick={() => changeModelGPT('gpt-5.2')}>GPT 5.2</div>
+  <div className="radio-option-modal" onClick={() => changeModelGPT('gpt-5-mini')}>GPT-5 Mini</div>
+  <div className="radio-option-modal" onClick={() => changeModelGPT('gpt-5')}>GPT-5</div>
 </div>
 
 
@@ -82,10 +82,10 @@ return(
         <div className='Modal-input'>
             <input type="text"   placeholder={`Current model: ${model}`} />
             <div className="radio-group" onClick={() => setTheme(!theme)}>
-  <div className="radio-option" onClick={() => changeModel('gemini-2.5-flash')}>Gemini Flash</div>
-  <div className="radio-option" onClick={() => changeModel('gemini-2.5-pro')}>Gemini Pro</div>
-  <div className="radio-option" onClick={() => changeModel('gemini-3-pro-preview')}>Gemini Ultra</div>
-  <div className="radio-option" onClick={() => changeModel('gemini-2.5-flash-lite')}>Gemini Lite</div>
+  <div className="radio-option-modal" onClick={() => changeModel('gemini-2.5-flash')}>Gemini Flash</div>
+  <div className="radio-option-modal" onClick={() => changeModel('gemini-2.5-pro')}>Gemini Pro</div>
+  <div className="radio-option-modal" onClick={() => changeModel('gemini-3-pro-preview')}>Gemini Ultra</div>
+  <div className="radio-option-modal" onClick={() => changeModel('gemini-2.5-flash-lite')}>Gemini Lite</div>
 </div>
 
 

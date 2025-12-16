@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import { useContext } from 'react'
 import './Login.css'
 import { Context } from '../../Context/Context'
 
@@ -14,12 +14,8 @@ const Login = () => {
         localStorage.setItem('User', JSON.stringify(user))
         localStorage.setItem('GPT Key', JSON.stringify(GPT)) 
         window.location.reload()
-        
-
-
-    }
-
     
+    }
 
     return (
         <div className="login-container">

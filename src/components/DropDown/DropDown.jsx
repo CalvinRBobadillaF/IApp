@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, useContext } from "react";
+import { useRef, useEffect, useContext } from "react";
 import './DropDown.css'
 import { Context } from "../../Context/Context";
-import { assets } from "../../assets/assets";
+
 
 
 const DropDown = () => {

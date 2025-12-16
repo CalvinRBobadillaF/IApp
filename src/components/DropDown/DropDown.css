@@ -5,12 +5,15 @@
 }
 
 .radio-option {
-  padding: 8px 12px;
-  border-radius: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #fff;
+  text-align: center;
   cursor: pointer;
-  background: #2a2a2a;
-  color: white;
-  transition: background 0.2s;
+  font-size: 14px;
+  transition: 0.2s ease;
+  user-select: none;
 }
 
 .radio-option:nth-child(1) {

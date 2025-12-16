@@ -46,9 +46,9 @@ const SidebarGPT = () => {
                         d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
 
-                <div className="new-chat-gpt">
-                    <img src={assets.plus_icon} alt="" onClick={newChat} />
-                    {openSidebar ? <p onClick={newChat}>New Chat</p> : null}
+                <div className="new-chat-gpt" onClick={newChat}>
+                    <img src={assets.plus_icon} alt=""  />
+                    {openSidebar ? <p >New Chat</p> : null}
                 </div>
 
                 {openSidebar && (
