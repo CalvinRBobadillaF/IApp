@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useEffect } from "react";
+import { useContext } from "react";
 import './MainGPT.css';
 import { assets } from "../../assets/assets";
 import { Context } from "../../Context/Context";

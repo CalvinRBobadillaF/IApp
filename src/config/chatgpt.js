@@ -28,5 +28,5 @@ export const MainGPT = async (prompt) => {
   }
 };
 
-MainGPT('Cuentame un dato curioso.')
+
 

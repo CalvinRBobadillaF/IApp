@@ -23,6 +23,7 @@ const ContextProvider = ({ children }) => {
   const [models, setModels] = useState(false);
   const [geminiKey, setGeminiKey] = useState('')
   const [GPTKey, setGPTKey] = useState('')
+  const [claudeKey, setClaudeKey] = useState('')
 
   const [modelFeature, setModelFeature] = useState("Gemini");
 
@@ -242,6 +243,8 @@ const ContextProvider = ({ children }) => {
         setModalModels,
         GPTKey,
         modelFeature,
+        claudeKey,
+        setClaudeKey,
         setModelFeature
       }}
     >

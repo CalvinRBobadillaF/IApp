@@ -11,16 +11,16 @@
 }
 
 
-.main-gpt {
+.main-claude {
     flex: 1;
     min-height: 100vh;
     padding-bottom: 15vh;
     position: relative;
-      background-color: #06000f;
+      background: linear-gradient(180deg, #140A0A, #1F1212);
   color: var(--muted);
 }
 
-.main-gpt .nav-gpt {
+.main-claude .nav-claude {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -30,72 +30,77 @@
 
 }
 
-.MenuMobile-gpt {
+.MenuMobile-claude {
     width: 35px;
     color: white;
 }
 
-.Title-gpt {
+.Title-claude {
     color: #c4c7c5;
 }
 
-.main-gpt .nav-gpt img {
-    width: 40px;
+.main-claude .nav-claude img {
+    width: 40;
     border-radius: 50%;
 
 }
 
-.main-container-gpt {
+.profile-image {
+    width: 40px;
+    border-radius: 50%;
+}
+
+.main-container-claude {
     max-width: 900px;
     margin: auto;
 
 }
 
-.title-div-gpt {
+.title-div-claude {
     display: flex;
     flex-direction: row;
     
 }
 
-.title-div-gpt svg:hover {
+.title-div-claude svg:hover {
 background-color: #2e2e2e;
 }
 
-.title-div-gpt svg{
+.title-div-claude svg{
     color: white;
     width: 30px;
     height: 30px;
     margin-left: 10px;
     border-radius: 50%;
 }
-.main-gpt .greet-gpt {
+.main-claude .greet-claude {
     margin: 50px 0px;
     font-size: 56px;
     color: #c4c7c5;
     font-weight: 500;
     padding: 20px;
-}
+    }
 
-
-.main-gpt .cards-gpt {
+.main-claude .cards-claude {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(180px, 1fr));
     gap: 15px;
     padding: 20px;
     
+
 }
 
-.main-gpt .card-gpt {
+.main-claude .card-claude {
     height: 200px;
     padding: 15px;
-   background: linear-gradient(135deg, #120018 0%, #2B0A3D 45%, #5A189A 100%);
-  
-    border-radius: 10px;
+    background: linear-gradient(135deg, #3B0A0A 0%, #7A1C12 45%, #D14A1A 100%);
+    border-radius: 10;
     position: relative;
     cursor: pointer;
+    border-radius: 8px;
 }
 
-.main-gpt .card-gpt img {
+.main-claude .card-claude img {
     width: 35px;
     padding: 5px;
     position: absolute;
@@ -106,17 +111,27 @@ background-color: #2e2e2e;
     right: 10px;
 }
 
-.main-gpt .card-gpt p{
+.card-claude svg {
+    width: 35px;
+    padding: 5px;
+    position: absolute;
+    color: white;
+    
+    border-radius: 20px;
+    bottom: 10px;
+    right: 10px;
+}
+
+.main-claude .card-claude p{
     color: #c0bfbf;
     font-size: 17px;
 }
 
-.main-gpt .card-gpt:hover {
-    background-color: rgb(33, 33, 43);
-    
+.main-claude .card-claude:hover {
+    background-color: rgb(33, 33, 43)claude
 }
 
-.main-gpt .main-bottom-gpt {
+.main-claude .main-bottom-claude {
     position: absolute;
     bottom: 0;
     display: grid;
@@ -129,23 +144,27 @@ background-color: #2e2e2e;
     
 }
 
-.main-gpt .search-box-gpt {
+.claude-svg {
+    width: 30px;
+}
+
+.main-claude .search-box-claude {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    background-color: #261c2e;
+    background-color: #270300;
     padding: 10px 20px;
     border-radius: 50px;
     width: 50vw;
 }
 
-.main-gpt .search-box-gpt img {
+.main-claude .search-box-claude img {
     width: 24px;
     cursor: pointer;
 }
 
-.search-box-gpt input {
+.search-box-claude input {
     flex: 1;
     background: transparent;
     
@@ -158,37 +177,37 @@ background-color: #2e2e2e;
 }
 
 
-.search-box-gpt div {
+.search-box-claude div {
     display: flex;
     align-items: center;
     gap: 15px;
 }
 
-.main-gpt .bottom-info-gpt {
+.main-claude .bottom-info-claude {
     font-size: 13px;
     margin: 15px auto;
     text-align: center;
     font-weight: 700;
 }
 
-.result-gpt{
+.result-claude{
     padding: 0px 5%;
     max-height: 70vh;
     
 }
 
-.result-gpt::-webkit-scrollbar {
+.result-claude::-webkit-scrollbar {
     display: none;
 }
 
-.result-title-gpt {
+.result-title-claude {
     margin: 40px 0px;
     display: flex;
     align-items: center;
     gap: 20px;
 }
 
-.result-title-gpt p {   
+.result-title-claude p {   
     font-size: 17px;
     font-weight: 300;
     line-height: 1.8;
@@ -198,13 +217,13 @@ background-color: #2e2e2e;
     color: white;
 }
 
-.result-gpt img {
+.result-claude img {
     width: 40px;
     border-radius: 50%;
 
 }
 
-.result-data-gpt {
+.result-data-claude {
     display: flex;
     align-items: start;
     gap: 20px;
@@ -212,7 +231,7 @@ background-color: #2e2e2e;
     
 }
 
-.loader-gpt {
+.loader-claude {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -220,7 +239,7 @@ background-color: #2e2e2e;
 
 }
 
-.loader-gpt hr{
+.loader-claude hr{
     border-radius: 40px;
     border: none;
     background-color: #181E2F;
@@ -230,13 +249,13 @@ background-color: #2e2e2e;
     animation: loader 3s infinite linear
 }
 
-.MenuMobile-gpt {
+.MenuMobile-claude {
     display: none;
 }
 
 
 
-.result-data-gpt p {
+.result-data-claude p {
     color: white;
     font-size: 17px;
     font-weight: 300;
@@ -253,27 +272,22 @@ background-color: #2e2e2e;
   color: #fff;
 }
 
-.main-container-gpt {
+.main-container-claude {
     overflow-y: scroll;
 }
 
-.main-container-gpt::-webkit-scrollbar {
+.main-container-claude::-webkit-scrollbar {
     display: none;
 }
 
-.send-icon-gpt {
+.send-icon-claude {
     color: white;
     width: 20px;
     height: 20px;
 }
 
-.user-name-gpt {
-    background: linear-gradient(
-        90deg,
-        #a855f7,
-        #7c3aed,
-        #6366f1
-    );
+.user-name-claude {
+    background: linear-gradient(135deg, #8B1E1E, #F97316);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 600;
@@ -283,28 +297,28 @@ background-color: #2e2e2e;
 
 
 @media (max-width: 600px) {
-    .MenuMobile-gpt {
+    .MenuMobile-claude {
         display: block;
     }
 
-    .greet-gpt span{
+    .greet-claude span{
         font-size: 40px;
         color: rgb(141, 140, 140);
     }
-    .greet-gpt p {
+    .greet-claude p {
         font-size: 40px;
         color: rgb(141, 140, 140);
     }
-    .main-gpt .card-gpt {
+    .main-claude .card-claude {
         height: 100px;
     padding: 10px;
     }
 
-    .main-gpt .search-box-gpt {
+    .main-claude .search-box-claude {
         width: 90vw;
     }
 
-   .result-data-gpt p {
+   .result-data-claude p {
     max-width: 75vw;
     
    }
@@ -321,6 +335,3 @@ background-color: #2e2e2e;
         background-position: 800px 0px;
     }
 }
-
-
-

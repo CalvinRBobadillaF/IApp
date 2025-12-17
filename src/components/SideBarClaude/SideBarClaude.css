@@ -1,0 +1,136 @@
+
+.sidebar-claude {
+    min-height: 100vh;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #140A0A;
+
+
+    padding: 25px 15px;
+    width: auto;
+}
+
+.sidebar-claude img {
+    width: 20px;
+    
+    color: white;
+}
+
+
+.sidebar-claude .MenuPC-claude {
+    display: block;
+    margin-left: 10px;
+    cursor: pointer;
+    width: 35px;
+    color: white;
+}
+
+.title-claude {
+    font-size: 16px;
+    color: white;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.sidebar-claude .new-chat-claude {
+    margin-top: 35px;
+    margin-bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    
+    border-radius: 50px;
+    font-size: 14px;
+    cursor: pointer;
+    color: white;
+    
+}
+
+.new-chat-claude {
+    background-color: #1F1212;
+}
+
+.sidebar-claude .recent-claude {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn, 1s;
+}
+
+.recent-claude svg {
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-claude .recent-title-claude {
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.sidebar-claude .recent-entry-claude {
+    display: flex;
+    align-items: start;
+    gap: 10px;
+    padding: 10px;
+    padding-right: 40px;
+    border-radius: 50px;
+    color: #c4c7c5;
+    cursor: pointer;
+    
+}
+
+.setting-svg-claude {
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-claude .recent-entry-claude:hover {
+    background-color: #242127;
+}
+
+.sidebar-claude .bottom-claude {
+    display: flex;
+    flex-direction: column;
+    
+}
+
+.sidebar-claude .bottom-item-claude {
+    padding-right: 10px;
+    cursor: pointer;
+}
+
+.delete-svg-claude {
+    color: rgb(197, 79, 0);
+    width: 20px;
+    height: 20px;
+}
+
+.delete-svg-claude:hover {
+    background-color: #242127;
+}
+
+@media (max-width: 600px) {
+    
+
+    .sidebar-claude  {
+        display: none;
+        min-width: 68vw;
+        
+        
+    }
+
+    
+
+    .sidebar-claude.open {
+    display: inline-flex;
+    height: 100%;
+    z-index: 10;
+    
+    
+}
+
+.sidebar-claude .MenuPC-claude {
+    display: none;
+}
+}

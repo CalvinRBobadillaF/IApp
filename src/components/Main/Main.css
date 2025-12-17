@@ -73,7 +73,8 @@ background-color: #2e2e2e;
 .main .card {
     height: 200px;
     padding: 15px;
-    background-color: #2e2e2e;
+   /* background-color: #2e2e2e; */
+   background: linear-gradient(135deg, #000000 0%, #1f1f1f 45%, #0c0505 100%);
     border-radius: 10px;
     position: relative;
     cursor: pointer;
@@ -118,7 +119,7 @@ background-color: #2e2e2e;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    background-color: #2c2c2c;
+    background-color: #1f1e1e;
     padding: 10px 20px;
     border-radius: 50px;
     width: 50vw;

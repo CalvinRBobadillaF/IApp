@@ -4,9 +4,28 @@ import { Context } from "../../Context/Context";
 
 
 
+
 const DropDown = () => {
   const {models, setModelFeature,  setModels} = useContext(Context)
   const ref = useRef(null);
+
+  const changeModel = (modelName) => {
+    let model = modelName
+    localStorage.setItem('Model', JSON.stringify(model))
+    setModelFeature('Gemini')
+   }
+
+   const changeModelGPT = (modelName) => {
+    let model = modelName
+    localStorage.setItem('ModelGPT', JSON.stringify(model))
+    setModelFeature('GPT')
+   }
+
+   const changeModelClaude = (modelName) => {
+    let model = modelName
+    localStorage.setItem('ModelClaude', JSON.stringify(model))
+    setModelFeature('Claude')
+   }
 
 
   // Cerrar al hacer click fuera
@@ -41,10 +60,10 @@ const DropDown = () => {
             zIndex: 100,
           }}
         >
-          <div className="radio-option" onClick={() => setModelFeature('GPT') } > ChatGPT</div>
-          <div className="radio-option">DeepSeek</div>
-          <div className="radio-option">Claude</div>
-          <div className="radio-option" onClick={() => setModelFeature('Gemini')}>Gemini</div>
+          <div className="radio-option" onClick={() => changeModelGPT('gpt-5') } > ChatGPT</div>
+          <div className="radio-option">Grok</div>
+          <div className="radio-option" onClick={() => changeModelClaude('claude-sonnet-4-5-20250929') }>  Claude</div>
+          <div className="radio-option" onClick={() => changeModel('gemini-2.5-flash') }> Gemini</div>
           
         </div>
       )}

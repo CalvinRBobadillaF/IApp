@@ -12,6 +12,7 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@google/genai": "^1.30.0",
     "gh-pages": "^6.3.0",
     "openai": "^6.10.0",

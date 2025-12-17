@@ -28,28 +28,66 @@ const Modal = () => {
     localStorage.setItem('ModelGPT', JSON.stringify(model))
    }
 
+   const changeModelClaude = (modelName) => {
+    let model = modelName
+    localStorage.setItem('ModelClaude', JSON.stringify(model))
+   }
    
 
-   const userModel = localStorage.getItem('Model')
+const userModel = localStorage.getItem('Model')
 const model = userModel?.replace(/["\\]/g, "")
 
 const userModelGPT = localStorage.getItem('ModelGPT')
 const modelGPT = userModelGPT?.replace(/["\\]/g, "")
 
-if (userModel == undefined  ) {
-    changeModel('gemini-2.5-flash')
-}
+const userModelClaude = localStorage.getItem('ModelClaude')
+const modelClaude = userModelClaude?.replace(/["\\]/g, "")
 
 
-if (modelFeature == 'GPT') {
-    if (userModelGPT == undefined ) {
-    changeModel('gpt-5')
-}
+if (modelFeature == 'Claude') {
+    if (userModelClaude == undefined || userModelClaude != 'claude') {
+        changeModelClaude('claude-sonnet-4-5-20250929')
+    }
     return(
     <div className='Modal'>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" onClick={() => setOpenModal(!openModal)} class="size-6">
+        <div onClick={() => setOpenModal(!openModal)}>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-6">
     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
     </svg>
+    </div>
+
+            <img src={assets.user_icon} alt="user"  />
+            <p className='user-name'>{user}</p>
+        
+        <div className='Modal-input'>
+            <input type="text"   placeholder={`Current model: ${modelClaude}`} />
+            <div className="radio-group" onClick={() => setTheme(!theme)}>
+  <div className="radio-option-modal" onClick={() => changeModelClaude('claude-sonnet-4-5-20250929')}>Claude Sonnet 4.5</div>
+  <div className="radio-option-modal" onClick={() => changeModelClaude('claude-haiku-4-5-20251001')}>Claude haiku 4.5</div>
+  <div className="radio-option-modal" onClick={() => changeModelClaude('claude-opus-4-5-20251101')}>Claude Opus 4.5</div>
+</div>
+
+
+        </div>
+        
+    </div>
+    )
+
+}
+
+
+
+    if (modelFeature == 'GPT') {
+        if (userModelGPT == undefined || userModelGPT != 'gpt' ) {
+            changeModel('gpt-5')
+        } 
+    return(
+    <div className='Modal'>
+        <div onClick={() => setOpenModal(!openModal)}>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-6">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+    </div>
 
             <img src={assets.user_icon} alt="user"  />
             <p className='user-name'>{user}</p>
@@ -68,13 +106,20 @@ if (modelFeature == 'GPT') {
         
     </div>
 )
+        }
+
+
+if (userModel == undefined || userModel != 'gemini' ) {
+    changeModel('gemini-2.5-flash')
 }
 
 return(
     <div className='Modal'>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" onClick={() => setOpenModal('none')} class="size-6">
+        <div onClick={() => setOpenModal(!openModal)}>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-6">
     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
     </svg>
+    </div>
 
             <img src={assets.user_icon} alt="user"  />
             <p className='user-name'>{user}</p>
