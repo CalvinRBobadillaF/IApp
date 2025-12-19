@@ -23,15 +23,12 @@
   background: linear-gradient(135deg, #120018 0%, #2B0A3D 45%, #5A189A 100%);
 }
 
-.radio-option:nth-child(2) {
-  background: linear-gradient(135deg, #000000 0%, #4B4B4B 45%, #FFFFFF 100%)
-}
 
-.radio-option:nth-child(3) {
+.radio-option:nth-child(2) {
    background: linear-gradient(135deg, #3B0A0A 0%, #7A1C12 45%, #D14A1A 100%);
 }
 
-.radio-option:nth-child(4) {
+.radio-option:nth-child(3) {
   background: linear-gradient(135deg, #000000 0%, #1f1f1f 45%, #0c0505 100%);
 }
 

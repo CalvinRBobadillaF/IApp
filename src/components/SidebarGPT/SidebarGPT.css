@@ -7,6 +7,12 @@
     background-color: #0c0518;
     padding: 25px 15px;
     width: auto;
+    transform: translateX(0);
+    opacity: 1;
+    transition:
+        transform 0.35s cubic-bezier(.4, 0, .2, 1),
+        opacity 0.25s ease;
+
 }
 
 .sidebar-gpt img {
@@ -22,6 +28,27 @@
     cursor: pointer;
     width: 35px;
     color: white;
+}
+
+
+.sidebar-gpt.open .recent-entry-gpt {
+    animation: recentItemIn 0.35s ease forwards;
+}
+
+.sidebar-gpt.open .recent-entry-gpt:nth-child(1) { animation-delay: 0.05s; }
+.sidebar-gpt.open .recent-entry-gpt:nth-child(2) { animation-delay: 0.1s; }
+.sidebar-gpt.open .recent-entry-gpt:nth-child(3) { animation-delay: 0.15s; }
+.sidebar-gpt.open .recent-entry-gpt:nth-child(4) { animation-delay: 0.2s; }
+
+@keyframes recentItemIn {
+    from {
+        opacity: 0;
+        transform: translateX(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .title-gpt {
@@ -115,10 +142,15 @@
     
 
     .sidebar-gpt  {
-        display: none;
-        min-width: 68vw;
-        
-        
+        position: fixed;
+        top: 0;
+        left: 0;
+        max-width: 68vw;
+        height: 100vh;
+        z-index: 100;
+        transform: translateX(-100%);
+        opacity: 0;
+        pointer-events: none;
     }
 
     
@@ -127,7 +159,9 @@
     display: inline-flex;
     height: 100%;
     z-index: 10;
-    
+    transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
     
 }
 

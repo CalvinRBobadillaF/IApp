@@ -279,6 +279,46 @@ background-color: #2e2e2e;
     font-weight: 600;
 }
 
+/* WRAPPER */
+.code-wrapper-gpt {
+  position: relative;
+}
+
+/* COPY BUTTON */
+.copy-btn-gpt {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #e9d5ff;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.copy-btn-gpt:hover {
+  background: rgba(168, 85, 247, 0.3);
+}
+
+/* CODE BLOCK (por si no lo tenías bien aplicado) */
+.code-block {
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 14px;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 10px 0;
+  font-family: "Fira Code", monospace;
+  font-size: 0.9rem;
+}
+
+.code-block code {
+  white-space: pre;
+}
 
 
 

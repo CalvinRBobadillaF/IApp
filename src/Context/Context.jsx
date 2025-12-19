@@ -104,6 +104,8 @@ const ContextProvider = ({ children }) => {
     });
   };
 
+  
+
   /* =========================
      WORD ANIMATION
   ========================== */
@@ -119,79 +121,99 @@ const ContextProvider = ({ children }) => {
   ========================== */
 
   const onSent = async (customPrompt) => {
-    const prompt = customPrompt ?? userPrompt;
-    if (!prompt.trim()) return;
+  const prompt = customPrompt ?? userPrompt;
+  if (!prompt.trim()) return;
 
-    if (!currentChatId) newChat();
+  if (!currentChatId) newChat();
 
-    setLoading(true);
-    setResultData("");
-    setUserPrompt("");
+  setLoading(true);
+  setResultData("");
+  setUserPrompt("");
 
-    // Add user message
-    setChatsByModel(prev => ({
+  // --- 1. Agregar mensaje del usuario al estado ---
+  setChatsByModel((prev) => ({
+    ...prev,
+    [modelFeature]: prev[modelFeature].map((chat) =>
+      chat.id === currentChatId
+        ? {
+            ...chat,
+            messages: [...chat.messages, { role: "user", text: prompt }],
+          }
+        : chat
+    ),
+  }));
+
+  try {
+    // --- 2. Llamada a la API ---
+    const response = await sendPrompt({
+      model: modelFeature,
+      prompt,
+    });
+
+    // --- 3. Formateo de la respuesta (Markdown simple a HTML) ---
+    const formatted = response
+      .split("**")
+      .map((seg, i) => (i % 2 === 1 ? `<b>${seg}</b>` : seg))
+      .join("")
+      .replace(/\*/g, "<br/>");
+
+    // --- 4. Efecto de escritura (Typing effect) ---
+    formatted.split(" ").forEach((w, i) => delayWord(i, w + " "));
+
+    // --- 5. Agregar mensaje de la IA al historial del chat ---
+    setChatsByModel((prev) => ({
       ...prev,
-      [modelFeature]: prev[modelFeature].map(chat =>
+      [modelFeature]: prev[modelFeature].map((chat) =>
         chat.id === currentChatId
           ? {
               ...chat,
-              messages: [...chat.messages, { role: "user", text: prompt }]
+              messages: [...chat.messages, { role: "model", text: formatted }],
             }
           : chat
-      )
+      ),
+    }));
+    
+  } catch (err) {
+    console.error(err);
+    const errorMsg = "Ocurrió un error procesando tu solicitud.";
+
+    // Agregar mensaje de error al chat
+    setChatsByModel((prev) => ({
+      ...prev,
+      [modelFeature]: prev[modelFeature].map((chat) =>
+        chat.id === currentChatId
+          ? {
+              ...chat,
+              messages: [...chat.messages, { role: "model", text: errorMsg }],
+            }
+          : chat
+      ),
     }));
 
-    try {
-      const response = await sendPrompt({
-        model: modelFeature,
-        prompt
-      });
+    setResultData(errorMsg);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      const formatted = response
-        .split("**")
-        .map((seg, i) => (i % 2 === 1 ? `<b>${seg}</b>` : seg))
-        .join("")
-        .replace(/\*/g, "<br/>");
+  const handleDelete = (e, chatId) => {
+        e.stopPropagation(); // evitar que dispare loadChat
+        const ok = confirm("¿Seguro que quieres borrar este chat? Esta acción no se puede deshacer.");
+        if (ok) deleteChat(chatId);
+    };
 
-      formatted.split(" ").forEach((w, i) =>
-        delayWord(i, w + " ")
-      );
-
-      // Add model message
-      setChatsByModel(prev => ({
-        ...prev,
-        [modelFeature]: prev[modelFeature].map(chat =>
-          chat.id === currentChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, { role: "model", text: formatted }]
-              }
-            : chat
-        )
-      }));
-
-    } catch (err) {
-      console.error(err);
-
-      const errorMsg = "Ocurrió un error procesando tu solicitud.";
-
-      setChatsByModel(prev => ({
-        ...prev,
-        [modelFeature]: prev[modelFeature].map(chat =>
-          chat.id === currentChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, { role: "model", text: errorMsg }]
-              }
-            : chat
-        )
-      }));
-
-      setResultData(errorMsg);
+    const resetStorage = () => {
+        localStorage.removeItem('Gemini Key')
+        localStorage.removeItem('GPT Key')
+        localStorage.removeItem('Claude Key')
+        window.location.reload()
     }
 
-    setLoading(false);
-  };
+    const deleteStorage = (e) => {
+        e.stopPropagation()
+        const ok = confirm('Seguro que quieres eliminar local storage?')
+        if (ok) resetStorage()
+    }
 
   /* =========================
      MODEL SWITCH FIX
@@ -245,6 +267,9 @@ const ContextProvider = ({ children }) => {
         modelFeature,
         claudeKey,
         setClaudeKey,
+        deleteStorage,
+        handleDelete,
+        resetStorage,
         setModelFeature
       }}
     >

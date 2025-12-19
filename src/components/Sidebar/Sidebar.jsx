@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 import './Sidebar.css';
 import { assets } from '../../assets/assets';
 import { Context } from "../../Context/Context";
@@ -12,30 +12,40 @@ const Sidebar = () => {
         openSidebar,
         setOpenSidebar,
         deleteChat,
+        deleteStorage,
+        handleDelete,
+        resetStorage,
         setOpenModal,
         openModal
         
-    } = useContext(Context);
+    } = useContext(Context)
 
-    const handleDelete = (e, chatId) => {
-        e.stopPropagation(); // evitar que dispare loadChat
-        const ok = confirm("¿Seguro que quieres borrar este chat? Esta acción no se puede deshacer.");
-        if (ok) deleteChat(chatId);
-    };
+    const sidebarRef = useRef(null);
 
-    const resetStorage = () => {
-        localStorage.removeItem('Gemini Key')
-        window.location.reload()
+
+    
+
+    useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (
+      openSidebar &&
+      sidebarRef.current &&
+      !sidebarRef.current.contains(e.target)
+    ) {
+      setOpenSidebar(false);
     }
+  };
 
-    const deleteStorage = (e) => {
-        e.stopPropagation()
-        const ok = confirm('Seguro que quieres eliminar local storage?')
-        if (ok) resetStorage()
-    }
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [openSidebar]);
+
 
     return (
-        <div className={`sidebar ${openSidebar ? "open" : ""}`}>
+        <div useRef={sidebarRef} className={`sidebar ${openSidebar ? "open" : ""}`}>
             <div className="top">
                 <svg xmlns="http://www.w3.org/2000/svg"
                     onClick={() => setOpenSidebar(!openSidebar)}
@@ -46,9 +56,12 @@ const Sidebar = () => {
                         d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
 
-                <div className="new-chat">
-                    <img src={assets.plus_icon} alt="" onClick={newChat} />
-                    {openSidebar ? <p onClick={newChat}>New Chat</p> : null}
+                <div className="new-chat" onClick={() => {
+                                      newChat();
+                                     setOpenSidebar(false);
+                                     }}>
+                    <img src={assets.plus_icon} alt=""  />
+                    {openSidebar ? <p >New Chat</p> : null}
                 </div>
 
                 {openSidebar && (
@@ -58,7 +71,10 @@ const Sidebar = () => {
                         {chats.map(chat => (
                             <div key={chat.id}
                                 className={`recent-entry ${chat.id === currentChatId ? "active" : ""}`}
-                                onClick={() => loadChat(chat.id)}
+                                onClick={() => {
+                                         loadChat(chat.id);
+                                           setOpenSidebar(false);
+                                        }}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />

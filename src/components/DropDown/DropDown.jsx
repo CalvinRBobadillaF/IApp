@@ -61,7 +61,7 @@ const DropDown = () => {
           }}
         >
           <div className="radio-option" onClick={() => changeModelGPT('gpt-5') } > ChatGPT</div>
-          <div className="radio-option">Grok</div>
+          
           <div className="radio-option" onClick={() => changeModelClaude('claude-sonnet-4-5-20250929') }>  Claude</div>
           <div className="radio-option" onClick={() => changeModel('gemini-2.5-flash') }> Gemini</div>
           
@@ -72,3 +72,7 @@ const DropDown = () => {
 };
 
 export default DropDown;
+
+
+/* <div className="radio-option">Grok</div>
+*/

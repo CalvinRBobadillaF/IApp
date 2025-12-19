@@ -126,6 +126,52 @@ background-color: #2e2e2e;
     color: #c0bfbf;
     font-size: 17px;
 }
+/* MESSAGE */
+.message-content-claude {
+  width: 100%;
+}
+
+/* CODE WRAPPER */
+.code-wrapper-claude {
+  position: relative;
+  margin: 12px 0;
+}
+
+/* COPY BUTTON */
+.copy-btn-claude {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fde68a;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.copy-btn-claude:hover {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+/* CODE BLOCK */
+.code-block-claude {
+  background: linear-gradient(135deg, #1f1300, #2c1b00);
+  color: #fde68a;
+  padding: 32px 16px 16px;
+  border-radius: 14px;
+  overflow-x: auto;
+  font-family: "Fira Code", monospace;
+  font-size: 0.9rem;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.code-block-claude code {
+  white-space: pre;
+}
 
 .main-claude .card-claude:hover {
     background-color: rgb(33, 33, 43)claude
