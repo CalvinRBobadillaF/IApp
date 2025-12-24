@@ -1,16 +1,16 @@
-import React, { useContext } from "react";
-import './MainGPT.css';
+import React, { useContext, useEffect, useRef } from "react";
+import "./MainGPT.css";
 import { assets } from "../../assets/assets";
 import { Context } from "../../Context/Context";
 import Modal from "../Modal/Modal";
 import DropDown from "../DropDown/DropDown";
+import RenderMessage from "../RenderMessage/RenderMessage";
 
 const MainGPT = () => {
   const {
     currentChat,
     onSent,
     loading,
-    resultData,
     userPrompt,
     setUserPrompt,
     openSidebar,
@@ -21,8 +21,18 @@ const MainGPT = () => {
     setOpenSidebar
   } = useContext(Context);
 
+  // Referencia para el scroll automático
+  const scrollRef = useRef(null);
+
   const userStorage = localStorage.getItem("User");
   const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
+
+  // Efecto para bajar el scroll automáticamente al recibir nuevos tokens
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [currentChat?.messages, loading]);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -33,7 +43,8 @@ const MainGPT = () => {
 
   return (
     <div className="main-gpt">
-      {/* --- Navegación Superior --- */}
+
+      {/* NAV */}
       <div className="nav-gpt">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -52,7 +63,7 @@ const MainGPT = () => {
         </svg>
 
         <div className="title-div-gpt">
-          <p className="Title-gpt">ChatGPT </p>
+          <p className="Title-gpt">ChatGPT</p>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             onClick={() => setModels(!models)}
@@ -68,17 +79,19 @@ const MainGPT = () => {
               d="m19.5 8.25-7.5 7.5-7.5-7.5"
             />
           </svg>
-          {models ? <DropDown /> : null}
+
+          {models && <DropDown />}
         </div>
 
         <img
           src={assets.user_icon}
           alt="user"
+          className="profile-img-gpt"
           onClick={() => setOpenModal(!openModal)}
         />
       </div>
 
-      {/* --- Contenedor de Contenido --- */}
+      {/* MAIN CONTENT */}
       <div className="main-container-gpt">
         {!currentChat || currentChat.messages.length === 0 ? (
           <>
@@ -95,24 +108,35 @@ const MainGPT = () => {
                 <img src={assets.bulb_icon} alt="" />
               </div>
 
-              <div className="card-gpt" onClick={() => onSent("who wins between Anakin and Luke Skywalker")}>
-                <p>who wins between Anakin and Luke Skywalker?</p>
+              <div
+                className="card-gpt"
+                onClick={() => onSent("Who wins between Anakin and Luke Skywalker?")}
+              >
+                <p>Who wins between Anakin and Luke Skywalker?</p>
                 <img src={assets.message_icon} alt="" />
               </div>
 
-              <div className="card-gpt" onClick={() => onSent("Technological advances that we may have in 2050")}>
+              <div
+                className="card-gpt"
+                onClick={() => onSent("Technological advances that we may have in 2050")}
+              >
                 <p>Technological advances that we may have in 2050</p>
                 <img src={assets.compass_icon} alt="" />
               </div>
 
-              <div className="card-gpt" onClick={() => onSent("Create a landing page of a Yaroa commerce with JS, Html and CSS")}>
-                <p>Create a landing page of a Yaroa commerce with JS, Html and CSS</p>
+              <div
+                className="card-gpt"
+                onClick={() =>
+                  onSent("Create a landing page of a Yaroa commerce with JS, HTML and CSS")
+                }
+              >
+                <p>Create a landing page of a Yaroa commerce with JS, HTML and CSS</p>
                 <img src={assets.code_icon} alt="" />
               </div>
             </div>
           </>
         ) : (
-          <div className="result-gpt">
+          <div className="result-gpt" ref={scrollRef}>
             {currentChat.messages.map((msg, i) => (
               <div
                 key={i}
@@ -123,25 +147,29 @@ const MainGPT = () => {
                 }
               >
                 <img
-                  src={msg.role === "user" ? assets.user_icon : assets.chatgpt_icon}
+                  src={
+                    msg.role === "user"
+                      ? assets.user_icon
+                      : assets.chatgpt_icon
+                  }
                   alt=""
                 />
-                {msg.role === "model" && i === currentChat.messages.length - 1 && loading ? (
-                  resultData.length === 0 ? (
-                    <div className="loader-gpt">
-                      <hr /><hr /><hr />
-                    </div>
-                  ) : (
-                    <p dangerouslySetInnerHTML={{ __html: resultData }}></p>
-                  )
-                ) : (
-                  <p dangerouslySetInnerHTML={{ __html: msg.text }}></p>
-                )}
+
+                <div className="message-content">
+                  {/* USER MESSAGE */}
+                  {msg.role === "user" && <p>{msg.text}</p>}
+
+                  {/* AI MESSAGE */}
+                  {msg.role === "model" && (
+                    <RenderMessage tokens={msg.tokens} model={'gpt'} />
+                  )}
+                </div>
               </div>
             ))}
-            
+
+            {/* Loading */}
             {loading && currentChat.messages.at(-1)?.role === "user" && (
-              <div className="result-data ai-message">
+              <div className="result-data-gpt ai-message-gpt">
                 <img src={assets.chatgpt_icon} alt="" />
                 <div className="thinking">🌠 Reasoning...</div>
               </div>
@@ -150,21 +178,22 @@ const MainGPT = () => {
         )}
       </div>
 
-      {openModal === true ? <Modal /> : null}
+      {openModal && <Modal />}
 
-      {/* --- Barra de entrada inferior --- */}
+      {/* INPUT */}
       <div className="main-bottom-gpt">
         <div className="search-box-gpt">
           <input
             type="text"
-            placeholder="Enter prompt here"
+            placeholder="Message ChatGPT"
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
           />
+
           <div>
-            <img src={assets.gallery_icon} alt="" />
-            <img src={assets.mic_icon} alt="" />
+            
+
             {userPrompt.length > 0 && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -184,6 +213,7 @@ const MainGPT = () => {
             )}
           </div>
         </div>
+
         <p className="bottom-info-gpt">
           ChatGPT may display incorrect information. Always verify important info.
         </p>

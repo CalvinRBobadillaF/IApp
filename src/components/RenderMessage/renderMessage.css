@@ -1,0 +1,174 @@
+/* ===============================
+   CONTENEDOR PRINCIPAL
+================================ */
+.rm-container {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: min-content;
+  line-height: 1.6;
+  color: #e5e7eb;
+  /* Evita que palabras largas rompan el layout */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* ===============================
+   PÁRRAFOS Y TEXTO
+================================ */
+.rm-paragraph {
+  display: block;
+  margin-bottom: 1.2rem;
+  /* Mantiene saltos de línea de la IA pero ajusta al ancho disponible */
+  white-space: pre-wrap;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* Oculta párrafos que queden vacíos tras el filtrado */
+.rm-paragraph:empty {
+  display: none;
+}
+
+.rm-text-span {
+  display: inline;
+  white-space: inherit;
+  font-size: 1rem;
+}
+
+/* ===============================
+   TIPOGRAFÍA INLINE
+================================ */
+.rm-bold {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.rm-italic {
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.rm-heading {
+  display: block;
+  margin: 1.5rem 0 0.5rem;
+  font-weight: 700;
+  color: #e9d5ff;
+  line-height: 1.3;
+}
+
+.rm-inline-code {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.9em;
+  color: #d8b4fe;
+}
+
+/* ===============================
+   BLOQUE DE CÓDIGO (Code Block)
+================================ */
+.code-wrapper-gpt {
+  position: relative;
+  margin: 1.2rem 0;
+  border-radius: 12px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.code-lang {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+
+.code-block {
+  margin: 0;
+  padding: 16px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #e5e7eb;
+  /* Scroll horizontal para código largo */
+  overflow-x: auto;
+}
+
+.code-block code {
+  white-space: pre;
+  display: block;
+}
+
+/* ===============================
+   BOTÓN COPIAR
+================================ */
+.copy-btn-gpt {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #e9d5ff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.copy-btn-gpt:hover {
+  background: rgba(168, 85, 247, 0.4);
+  color: #ffffff;
+}
+
+/* ===============================
+   RESPONSIVIDAD (Móvil)
+================================ */
+@media (max-width: 768px) {
+  .rm-container {
+    padding: 0 5px;
+    font-size: 0.95rem;
+  }
+
+  .rm-paragraph {
+    /* Deja margen para que el texto no toque los bordes del dispositivo */
+    max-width: calc(100vw - 30px);
+  }
+
+  .code-block {
+    font-size: 0.8rem;
+    padding: 12px;
+  }
+}
+
+/* ===============================
+   SCROLLBAR PERSONALIZADA
+================================ */
+.code-block::-webkit-scrollbar {
+  height: 6px;
+}
+
+.code-block::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.code-block::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.3);
+  border-radius: 10px;
+}
+
+.code-block::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.5);
+}

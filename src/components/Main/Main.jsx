@@ -1,9 +1,10 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import "./Main.css";
 import { assets } from "../../assets/assets";
 import { Context } from "../../Context/Context";
 import Modal from "../Modal/Modal";
 import DropDown from "../DropDown/DropDown";
+import RenderMessage from "../RenderMessage/RenderMessage";
 
 const Main = () => {
     const {
@@ -20,8 +21,18 @@ const Main = () => {
         setOpenSidebar
     } = useContext(Context);
 
+    // Referencia para el scroll automático
+    const scrollRef = useRef(null);
+
     const userStorage = localStorage.getItem("User");
     const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
+
+    // Efecto para bajar el scroll automáticamente cuando llega un mensaje
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [currentChat?.messages, loading]);
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
@@ -32,6 +43,7 @@ const Main = () => {
 
     return (
         <div className="main">
+
             {/* NAV */}
             <div className="nav">
                 <svg
@@ -75,6 +87,7 @@ const Main = () => {
                     src={assets.user_icon}
                     alt="user"
                     onClick={() => setOpenModal(!openModal)}
+                    className="profile-img"
                 />
             </div>
 
@@ -84,9 +97,9 @@ const Main = () => {
                     <>
                         <div className="greet">
                             <span>
-                                 Hello, <span className="user-name">{user}</span>
-                             </span>
-                             <p>How can I help you?</p>
+                                Hello, <span className="user-name">{user}</span>
+                            </span>
+                            <p>How can I help you?</p>
                         </div>
 
                         <div className="cards">
@@ -112,8 +125,7 @@ const Main = () => {
                         </div>
                     </>
                 ) : (
-                    <div className="result">
-                        {/* Messages */}
+                    <div className="result" ref={scrollRef}>
                         {currentChat.messages.map((msg, i) => (
                             <div
                                 key={i}
@@ -131,11 +143,20 @@ const Main = () => {
                                     }
                                     alt=""
                                 />
-                                <p dangerouslySetInnerHTML={{ __html: msg.text }} />
+
+                                <div className="message-content">
+                                    {/* USER MESSAGE */}
+                                    {msg.role === "user" && <p>{msg.text}</p>}
+
+                                    {/* AI MESSAGE */}
+                                    {msg.role === "model" && (
+                                        <RenderMessage tokens={msg.tokens} model={'gemini'} />
+                                    )}
+                                </div>
                             </div>
                         ))}
 
-                        {/* Loading / Thinking */}
+                        {/* Loading */}
                         {loading && currentChat.messages.at(-1)?.role === "user" && (
                             <div className="result-data ai-message">
                                 <img src={assets.gemini_icon} alt="" />
@@ -144,9 +165,9 @@ const Main = () => {
                         )}
                     </div>
                 )}
-            </div>
 
-            {openModal && <Modal />}
+                {openModal && <Modal />}
+            </div>
 
             {/* INPUT */}
             <div className="main-bottom">
