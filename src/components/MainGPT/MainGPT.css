@@ -289,6 +289,16 @@
   .message-content {
     max-width: calc(100vw - 100px);
   }
+
+  .main-gpt .card-gpt {
+  height: 100px;
+  padding: 15px;
+  background: linear-gradient(135deg, #120018 0%, #2b0a3d 45%, #5a189a 100%);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
 }
 
 @keyframes loader {

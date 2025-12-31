@@ -177,10 +177,18 @@ const ContextProvider = ({ children }) => {
   /* ============================================================
      GESTIÓN DE ALMACENAMIENTO
      ============================================================ */
-  const resetStorage = () => {
-    localStorage.clear();
-    window.location.reload();
-  };
+ const resetStorage = () => {
+        localStorage.removeItem('Gemini Key')
+        localStorage.removeItem('GPT Key')
+        localStorage.removeItem('Claude Key')
+        window.location.reload()
+ }
+
+ const deleteStorage = (e) => {
+        e.stopPropagation()
+        const ok = confirm('Seguro que quieres eliminar local storage?')
+        if (ok) resetStorage()
+    }
 
   const handleDelete = (e, chatId) => {
     e.stopPropagation();
@@ -224,6 +232,7 @@ const ContextProvider = ({ children }) => {
     setModalModels,
     modelFeature,
     setModelFeature,
+    deleteStorage,
     handleDelete,
     resetStorage,
   };

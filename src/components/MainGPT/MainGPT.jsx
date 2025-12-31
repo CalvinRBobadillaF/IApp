@@ -97,7 +97,7 @@ const MainGPT = () => {
           <>
             <div className="greet-gpt">
               <span>
-                Hello, <span className="user-name-gpt">{user}</span>
+                Hello <span className="user-name-gpt">{user} </span>
               </span>
               <p>How can I help you?</p>
             </div>

@@ -87,7 +87,7 @@ const MainClaude = () => {
           <>
             <div className="greet-claude">
               <span>
-                Hello, <span className="user-name-claude">{user}</span>
+                Hello <span className="user-name-claude">{user}</span>
               </span>
               <p>How can I help you?</p>
             </div>

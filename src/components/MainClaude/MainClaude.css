@@ -253,6 +253,15 @@
   .message-content {
     max-width: calc(100vw - 100px);
   }
+  .main-claude .card-claude {
+  height: 100px;
+  padding: 15px;
+  background: linear-gradient(135deg, #3b0a0a 0%, #7a1c12 45%, #d14a1a 100%);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
 }
 
 @media (min-width: 769px) {
