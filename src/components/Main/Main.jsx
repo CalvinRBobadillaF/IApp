@@ -97,7 +97,7 @@ const Main = () => {
                     <>
                         <div className="greet">
                             <span>
-                                Hello, <span className="user-name">{user}</span>
+                                Hello <span className="user-name">{user}</span>
                             </span>
                             <p>How can I help you?</p>
                         </div>
@@ -160,7 +160,7 @@ const Main = () => {
                         {loading && currentChat.messages.at(-1)?.role === "user" && (
                             <div className="result-data ai-message">
                                 <img src={assets.gemini_icon} alt="" />
-                                <div className="thinking">✨ Thinking...</div>
+                                <div className="thinking-gemini">✨ Thinking...</div>
                             </div>
                         )}
                     </div>

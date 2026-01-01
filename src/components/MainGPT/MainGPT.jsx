@@ -171,7 +171,7 @@ const MainGPT = () => {
             {loading && currentChat.messages.at(-1)?.role === "user" && (
               <div className="result-data-gpt ai-message-gpt">
                 <img src={assets.chatgpt_icon} alt="" />
-                <div className="thinking">🌠 Reasoning...</div>
+                <div className="thinking-gpt">🌠 Reasoning...</div>
               </div>
             )}
           </div>

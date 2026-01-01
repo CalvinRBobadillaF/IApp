@@ -145,7 +145,7 @@ const MainClaude = () => {
             {loading && currentChat.messages.at(-1)?.role === "user" && (
               <div className="result-data-claude ai-message-claude">
                 <img src={assets.claude_icon} alt="" />
-                <div className="thinking">⚙️ Coding...</div>
+                <div className="thinking-claude">⚙️ Coding...</div>
               </div>
             )}
           </div>

@@ -172,3 +172,52 @@
 .code-block::-webkit-scrollbar-thumb:hover {
   background: rgba(168, 85, 247, 0.5);
 }
+
+/* src/components/RenderMessage/renderMessage.css */
+
+/* El contenedor principal que centra todo */
+.rm-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* Centra la tarjeta en el chat */
+  margin: 12px 0;
+}
+
+/* La tarjeta blanca (figure) */
+.rm-image-figure {
+  margin: 0;
+  padding: 12px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  
+  /* DIMENSIONES CRÍTICAS */
+  width: 100%; 
+  max-width: 450px; /* Evita que sea gigante en pantallas grandes */
+  box-sizing: border-box; /* Importante para que el padding no rompa el ancho */
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* La imagen en sí */
+.rm-image {
+  width: 100%;          /* Ocupa todo el ancho de la tarjeta */
+  height: auto;         /* Calcula la altura automáticamente según el ancho */
+  aspect-ratio: 1 / 1;  /* Fuerza a que sea CUADRADA (1024x1024) */
+  border-radius: 8px;
+  object-fit: cover;    /* Recorta bordes si sobra espacio, pero mantiene proporción */
+  display: block;
+  background-color: #f0f0f0; /* Color de fondo mientras carga */
+}
+
+/* El texto de abajo */
+.rm-image-caption {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+  text-align: center;
+  font-family: sans-serif;
+}

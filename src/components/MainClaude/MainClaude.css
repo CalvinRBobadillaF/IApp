@@ -225,10 +225,11 @@
 }
 
 /* --- LOADER --- */
-.thinking {
+.thinking-claude {
   color: #f97316;
   font-style: italic;
   padding: 10px;
+  animation: pulse 1.5s infinite;
 }
 
 /* --- RESPONSIVE --- */
@@ -268,4 +269,15 @@
   .MenuMobile-claude {
     display: none;
   }
+}
+
+@keyframes pulse {
+    0% { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
+    50% { opacity: 1; text-shadow: 0 0 15px rgba(56, 189, 248, 0.6); }
+    100% { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
+}
+
+@keyframes loader {
+    0% { background-position: -800px 0px; }
+    100% { background-position: 800px 0px; }
 }

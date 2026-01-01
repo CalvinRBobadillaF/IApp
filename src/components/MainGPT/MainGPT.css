@@ -153,7 +153,10 @@
   width: 100%;
 }
 
-.result-gpt img {
+/* 🔥 CORRECCIÓN CLAVE: Solo aplicamos estilo 'avatar' a las imágenes directas del contenedor
+   de mensaje, para no afectar a las imágenes generadas dentro del contenido */
+.result-title-gpt > img, 
+.result-data-gpt > img {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -232,12 +235,13 @@
 }
 
 /* --- THINKING / REASONING --- */
-.thinking {
+.thinking-gpt {
   font-style: italic;
   padding: 10px;
-  color: #a855f7;
+  color: #a855f7 !important;
   display: flex;
   align-items: center;
+  animation: pulse 1.5s infinite;
   gap: 8px;
 }
 
@@ -272,6 +276,45 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* --- ESTILOS PARA IMÁGENES GENERADAS (POLLINATIONS) --- */
+.rm-image-container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.rm-image-figure {
+    margin: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: none;
+}
+
+/* Esta clase sobreescribe cualquier estilo global de img para la imagen generada */
+img.rm-image {
+    width: 100%;             /* Ocupa el ancho disponible */
+    max-width: 500px;        /* Límite razonable para que no sea gigante */
+    height: auto;            /* Mantiene proporción */
+    border-radius: 12px !important; /* Bordes suaves, forzamos para quitar el 50% circular */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    object-fit: contain;
+}
+
+.rm-image-caption {
+    font-size: 0.85rem;
+    color: #999f92;
+    text-align: center;
+    margin-top: 10px;
+    font-style: italic;
+    background: rgba(0,0,0,0.2);
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
 /* --- RESPONSIVE --- */
 @media (max-width: 600px) {
   .MenuMobile-gpt {
@@ -291,17 +334,23 @@
   }
 
   .main-gpt .card-gpt {
-  height: 100px;
-  padding: 15px;
-  background: linear-gradient(135deg, #120018 0%, #2b0a3d 45%, #5a189a 100%);
-  border-radius: 12px;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+    height: 100px;
+    padding: 15px;
+    background: linear-gradient(135deg, #120018 0%, #2b0a3d 45%, #5a189a 100%);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
 }
+
+@keyframes pulse {
+    0% { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
+    50% { opacity: 1; text-shadow: 0 0 15px rgba(56, 189, 248, 0.6); }
+    100% { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
 }
 
 @keyframes loader {
-  0% { background-position: -800px 0px; }
-  100% { background-position: 800px 0px; }
+    0% { background-position: -800px 0px; }
+    100% { background-position: 800px 0px; }
 }
