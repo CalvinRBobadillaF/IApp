@@ -221,3 +221,49 @@
   text-align: center;
   font-family: sans-serif;
 }
+
+/* ── LISTAS ── */
+.rm-list {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+  color: #e5e7eb;
+  line-height: 1.8;
+}
+
+.rm-list-item {
+  margin: 0.3rem 0;
+  font-size: 16px;
+}
+
+/* ── HEADINGS ── */
+.rm-heading { color: #fff; font-weight: 600; margin: 1.1rem 0 0.4rem; line-height: 1.3; }
+.rm-h1 { font-size: 1.8rem; }
+.rm-h2 { font-size: 1.5rem; }
+.rm-h3 { font-size: 1.25rem; }
+.rm-h4 { font-size: 1.1rem; }
+.rm-h5, .rm-h6 { font-size: 1rem; }
+
+/* ── CODE HEADER (asegura que siempre esté visible) ── */
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1e293b;
+  padding: 8px 14px;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.code-lang {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-family: "Fira Code", monospace;
+  text-transform: lowercase;
+}
+
+/* Ajuste: el pre no debe tener border-radius arriba si tiene header */
+.code-wrapper-gpt .code-block {
+  border-radius: 0 0 10px 10px;
+  margin: 0;
+}

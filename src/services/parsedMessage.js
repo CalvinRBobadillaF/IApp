@@ -1,130 +1,126 @@
 export const parsedMessage = (input = "") => {
   if (!input || typeof input !== "string") return [];
 
-  let text = input.replace(/\r\n/g, "\n");
-
-  /* ==========================================================
-     2️⃣ BLOQUES DE CÓDIGO
-     ========================================================== */
-  const codeRegex = /```(\w*)\n?([\s\S]*?)```/g;
+  const text = input.replace(/\r\n/g, "\n");
   const tokens = [];
+
+  // ── 1. DIVIDIR POR BLOQUES DE CÓDIGO (tienen prioridad absoluta) ──
+  const codeBlockRegex = /```(\w*)\n?([\s\S]*?)```/g;
   let lastIndex = 0;
   let match;
 
-  while ((match = codeRegex.exec(text)) !== null) {
-    const preText = text.slice(lastIndex, match.index);
-    if (preText) tokens.push({ type: "text", content: preText });
-
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      processText(text.slice(lastIndex, match.index), tokens);
+    }
     tokens.push({
       type: "code",
       language: match[1] || "code",
-      content: match[2].trim(),
+      content: match[2].trimEnd(),
     });
-    lastIndex = codeRegex.lastIndex;
+    lastIndex = codeBlockRegex.lastIndex;
   }
-  if (lastIndex < text.length) tokens.push({ type: "text", content: text.slice(lastIndex) });
 
-  /* ==========================================================
-     3️ DETECCIÓN DE IMÁGENES 
+  if (lastIndex < text.length) {
+    processText(text.slice(lastIndex), tokens);
+  }
 
-[Image of X]
-
-     ========================================================== */
-  const tokensWithImages = [];
-  
-
-  const open = "\\" + String.fromCharCode(91); 
-  const close = "\\" + String.fromCharCode(93);
-  const imageRegex = new RegExp(open + "Image of (.*?)" + close, "g");
-
-  tokens.forEach((token) => {
-    if (token.type !== "text") {
-      tokensWithImages.push(token);
-      return;
-    }
-
-    let lastImgIndex = 0;
-    let imgMatch;
-    imageRegex.lastIndex = 0;
-
-    while ((imgMatch = imageRegex.exec(token.content)) !== null) {
-      if (imgMatch.index > lastImgIndex) {
-        tokensWithImages.push({
-          type: "text",
-          content: token.content.slice(lastImgIndex, imgMatch.index),
-        });
-      }
-
-      // ✅ PROTECCIÓN DE TRIM:
-      // Usamos (imgMatch[1] || "") para asegurar que nunca sea undefined
-      const imgPrompt = imgMatch[1] ? imgMatch[1].trim() : "";
-
-      tokensWithImages.push({
-        type: "image",
-        content: imgPrompt,
-        alt: imgPrompt
-      });
-
-      lastImgIndex = imageRegex.lastIndex;
-    }
-
-    if (lastImgIndex < token.content.length) {
-      tokensWithImages.push({
-        type: "text",
-        content: token.content.slice(lastImgIndex),
-      });
-    }
-  });
-
-  /* ==========================================================
-     4️⃣ PROCESAR TEXTO INTERNO (INLINE)
-     ========================================================== */
-  const finalTokens = [];
-  const inlineRegex = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*)|(^#{1,6}\s.+)/gm;
-
-  tokensWithImages.forEach((token) => {
-    if (token.type !== "text") {
-      finalTokens.push(token);
-      return;
-    }
-
-    let last = 0;
-    let m;
-    inlineRegex.lastIndex = 0;
-
-    while ((m = inlineRegex.exec(token.content)) !== null) {
-      if (m.index > last) {
-        finalTokens.push({
-          type: "text",
-          content: token.content.slice(last, m.index),
-        });
-      }
-
-      const value = m[0];
-      if (value.startsWith("`")) {
-        finalTokens.push({ type: "inlineCode", content: value.slice(1, -1) });
-      } 
-      else if (value.startsWith("**")) {
-        finalTokens.push({ type: "bold", content: value.slice(2, -2) });
-      } 
-      else if (value.startsWith("*")) {
-        finalTokens.push({ type: "italic", content: value.slice(1, -1) });
-      } 
-      else if (value.startsWith("#")) {
-        const level = value.match(/^#+/)[0].length;
-        finalTokens.push({
-          type: "heading",
-          level,
-          content: value.replace(/^#+\s*/, "").trim(),
-        });
-      }
-      last = inlineRegex.lastIndex;
-    }
-
-    if (last < token.content.length) {
-      finalTokens.push({ type: "text", content: token.content.slice(last) });
-    }
-  });
-
-  return finalTokens;
+  return tokens;
 };
+
+/* ── 2. PROCESAR TEXTO: imágenes → bloques de línea → inline ── */
+function processText(text, tokens) {
+  const imageRegex = /\[Image of (.*?)\]/g;
+  let last = 0;
+  let m;
+  const parts = [];
+
+  while ((m = imageRegex.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: "rawText", content: text.slice(last, m.index) });
+    const prompt = m[1] ? m[1].trim() : "";
+    parts.push({ type: "image", content: prompt, alt: prompt });
+    last = imageRegex.lastIndex;
+  }
+  if (last < text.length) parts.push({ type: "rawText", content: text.slice(last) });
+
+  for (const part of parts) {
+    if (part.type !== "rawText") { tokens.push(part); continue; }
+    processLines(part.content, tokens);
+  }
+}
+
+/* ── 3. PROCESAR LÍNEA A LÍNEA (headings, listas) ── */
+function processLines(text, tokens) {
+  const lines = text.split("\n");
+  let pendingText = "";
+
+  const flushPending = () => {
+    if (pendingText.trim()) parseInline(pendingText, tokens);
+    pendingText = "";
+  };
+
+  for (const line of lines) {
+    // Heading: ## Título
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
+    if (headingMatch) {
+      flushPending();
+      tokens.push({
+        type: "heading",
+        level: headingMatch[1].length,
+        content: headingMatch[2].trim(),
+      });
+      continue;
+    }
+
+    // Lista con viñeta: - item  |  * item
+    const bulletMatch = line.match(/^\s*[-*]\s+(.+)/);
+    if (bulletMatch) {
+      flushPending();
+      tokens.push({ type: "listItem", content: bulletMatch[1].trim() });
+      continue;
+    }
+
+    // Lista numerada: 1. item
+    const numberedMatch = line.match(/^\s*\d+\.\s+(.+)/);
+    if (numberedMatch) {
+      flushPending();
+      tokens.push({ type: "listItem", content: numberedMatch[1].trim() });
+      continue;
+    }
+
+    pendingText += line + "\n";
+  }
+
+  flushPending();
+}
+
+/* ── 4. PARSEO INLINE (bold, italic, inlineCode) ── */
+function parseInline(text, tokens) {
+  // Orden importa: inlineCode antes que bold/italic para evitar conflictos
+  const inlineRegex = /(`[^`\n]+`)|(\*\*[\s\S]+?\*\*)|(\*[^*\n]+\*)/g;
+  let last = 0;
+  let m;
+
+  while ((m = inlineRegex.exec(text)) !== null) {
+    if (m.index > last) {
+      const chunk = text.slice(last, m.index);
+      if (chunk) tokens.push({ type: "text", content: chunk });
+    }
+
+    const value = m[0];
+    if (value.startsWith("`")) {
+      tokens.push({ type: "inlineCode", content: value.slice(1, -1) });
+    } else if (value.startsWith("**")) {
+      tokens.push({ type: "bold", content: value.slice(2, -2) });
+    } else if (value.startsWith("*")) {
+      tokens.push({ type: "italic", content: value.slice(1, -1) });
+    }
+
+    last = inlineRegex.lastIndex;
+  }
+
+  if (last < text.length) {
+    const remaining = text.slice(last);
+    if (remaining) tokens.push({ type: "text", content: remaining });
+  }
+}

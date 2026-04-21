@@ -2,33 +2,16 @@ import { useRef, useEffect, useContext } from "react";
 import './DropDown.css'
 import { Context } from "../../Context/Context";
 
-
-
-
 const DropDown = () => {
-  const {models, setModelFeature,  setModels} = useContext(Context)
+  const { models, setModelFeature, setModels } = useContext(Context);
   const ref = useRef(null);
 
-  const changeModel = (modelName) => {
-    let model = modelName
-    localStorage.setItem('Model', JSON.stringify(model))
-    setModelFeature('Gemini')
-   }
+  const selectModel = (storageKey, value, feature) => {
+    localStorage.setItem(storageKey, JSON.stringify(value));
+    setModelFeature(feature);
+    setModels(false);
+  };
 
-   const changeModelGPT = (modelName) => {
-    let model = modelName
-    localStorage.setItem('ModelGPT', JSON.stringify(model))
-    setModelFeature('GPT')
-   }
-
-   const changeModelClaude = (modelName) => {
-    let model = modelName
-    localStorage.setItem('ModelClaude', JSON.stringify(model))
-    setModelFeature('Claude')
-   }
-
-
-  // Cerrar al hacer click fuera
   useEffect(() => {
     const handleClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -41,10 +24,6 @@ const DropDown = () => {
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      
-      
-
-      {/* Dropdown */}
       {models && (
         <div
           className="radio-group"
@@ -60,11 +39,15 @@ const DropDown = () => {
             zIndex: 100,
           }}
         >
-          <div className="radio-option" onClick={() => changeModelGPT('gpt-5') } > ChatGPT</div>
-          
-          <div className="radio-option" onClick={() => changeModelClaude('claude-sonnet-4-5-20250929') }>  Claude</div>
-          <div className="radio-option" onClick={() => changeModel('gemini-2.5-flash') }> Gemini</div>
-          
+          <div className="radio-option" onClick={() => selectModel('ModelGPT', 'gpt-5', 'GPT')}>
+            ChatGPT
+          </div>
+          <div className="radio-option" onClick={() => selectModel('ModelClaude', 'claude-sonnet-4-6', 'Claude')}>
+            Claude
+          </div>
+          <div className="radio-option" onClick={() => selectModel('Model', 'gemini-2.5-flash', 'Gemini')}>
+            Gemini
+          </div>
         </div>
       )}
     </div>
@@ -72,7 +55,3 @@ const DropDown = () => {
 };
 
 export default DropDown;
-
-
-/* <div className="radio-option">Grok</div>
-*/
