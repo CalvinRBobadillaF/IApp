@@ -4,7 +4,7 @@ import { assets } from "../../assets/assets";
 import { Context } from "../../Context/Context";
 import Modal from "../Modal/Modal";
 import DropDown from "../DropDown/DropDown";
-import RenderMessage from "../RenderMessage/RenderMessage";
+import RenderMessage, {UserMessage} from "../RenderMessage/RenderMessage";
 
 const MainClaude = () => {
   const {
@@ -132,7 +132,7 @@ const MainClaude = () => {
                 <img src={msg.role === "user" ? assets.user_icon : assets.claude_icon} alt="" />
                 <div className="message-content">
                   {/* USER MESSAGE */}
-                  {msg.role === "user" && <p>{msg.text}</p>}
+                  {msg.role === "user" && <UserMessage text={msg.text} />}
 
                   {/* AI MESSAGE */}
                   {msg.role === "model" && (

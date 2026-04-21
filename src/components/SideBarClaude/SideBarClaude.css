@@ -1,3 +1,4 @@
+/* ✅ Fix: era "animation: fadeIn, 1s" — la coma es inválida */
 
 .sidebar-claude {
     min-height: 100vh;
@@ -5,22 +6,19 @@
     flex-direction: column;
     justify-content: space-between;
     background-color: #140A0A;
+    padding: 25px 15px;
+    width: auto;
     transform: translateX(0);
     opacity: 1;
     transition:
         transform 0.35s cubic-bezier(.4, 0, .2, 1),
         opacity 0.25s ease;
-
-    padding: 25px 15px;
-    width: auto;
 }
 
 .sidebar-claude img {
     width: 20px;
-    
     color: white;
 }
-
 
 .sidebar-claude .MenuPC-claude {
     display: block;
@@ -28,6 +26,11 @@
     cursor: pointer;
     width: 35px;
     color: white;
+    transition: color 0.2s ease;
+}
+
+.sidebar-claude .MenuPC-claude:hover {
+    color: #f97316;
 }
 
 .title-claude {
@@ -35,6 +38,10 @@
     color: white;
     margin-top: 15px;
     margin-bottom: 10px;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
 }
 
 .sidebar-claude .new-chat-claude {
@@ -44,126 +51,171 @@
     align-items: center;
     gap: 10px;
     padding: 10px 15px;
-    
     border-radius: 50px;
     font-size: 14px;
     cursor: pointer;
     color: white;
-    
+    background-color: #1F1212;
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.2s ease, transform 0.15s ease;
 }
 
-.new-chat-claude {
-    background-color: #1F1212;
+.sidebar-claude .new-chat-claude:hover {
+    background-color: #2d1515;
+    transform: scale(1.02);
 }
 
 .sidebar-claude .recent-claude {
     display: flex;
     flex-direction: column;
-    animation: fadeIn, 1s;
+    /* ✅ Fix: sintaxis correcta sin coma */
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .recent-claude svg {
     width: 20px;
     height: 20px;
-}
-
-.sidebar-claude .recent-title-claude {
-    margin-top: 30px;
-    margin-bottom: 20px;
+    flex-shrink: 0;
+    opacity: 0.6;
 }
 
 .sidebar-claude .recent-entry-claude {
     display: flex;
-    align-items: start;
+    align-items: center;
     gap: 10px;
-    padding: 10px;
-    padding-right: 40px;
-    border-radius: 50px;
+    padding: 9px 12px;
+    border-radius: 10px;
     color: #c4c7c5;
     cursor: pointer;
-    
-}
-.sidebar-claude.open .recent-entry-claude {
-    animation: recentItemIn 0.35s ease forwards;
+    transition: background 0.18s ease, transform 0.15s ease;
+    border: 1px solid transparent;
 }
 
-.sidebar-claude.open .recent-entry-claude:nth-child(1) { animation-delay: 0.05s; }
-.sidebar-claude.open .recent-entry-claude:nth-child(2) { animation-delay: 0.1s; }
-.sidebar-claude.open .recent-entry-claude:nth-child(3) { animation-delay: 0.15s; }
-.sidebar-claude.open .recent-entry-claude:nth-child(4) { animation-delay: 0.2s; }
+.sidebar-claude .recent-entry-claude:hover {
+    background-color: rgba(255, 100, 50, 0.1);
+    border-color: rgba(255, 100, 50, 0.15);
+    transform: translateX(2px);
+}
+
+/* Entrada animada para cada item reciente */
+.sidebar-claude.open .recent-entry-claude {
+    animation: recentItemIn 0.3s ease forwards;
+    opacity: 0;
+}
+
+.sidebar-claude.open .recent-entry-claude:nth-child(1) { animation-delay: 0.04s; }
+.sidebar-claude.open .recent-entry-claude:nth-child(2) { animation-delay: 0.08s; }
+.sidebar-claude.open .recent-entry-claude:nth-child(3) { animation-delay: 0.12s; }
+.sidebar-claude.open .recent-entry-claude:nth-child(4) { animation-delay: 0.16s; }
+.sidebar-claude.open .recent-entry-claude:nth-child(5) { animation-delay: 0.20s; }
 
 @keyframes recentItemIn {
-    from {
-        opacity: 0;
-        transform: translateX(-8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
+
+/* Chat activo */
+.sidebar-claude .recent-entry-claude.active {
+    background: rgba(249, 115, 22, 0.12);
+    border-color: rgba(249, 115, 22, 0.25);
+    color: #f97316;
+}
+
+.sidebar-claude .recent-entry-claude p {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
 .setting-svg-claude {
     width: 20px;
     height: 20px;
 }
 
-.sidebar-claude .recent-entry-claude:hover {
-    background-color: #242127;
-}
-
 .sidebar-claude .bottom-claude {
     display: flex;
     flex-direction: column;
-    
+    gap: 4px;
 }
 
-.sidebar-claude .bottom-item-claude {
-    padding-right: 10px;
+.sidebar-claude .bottom-item {
+    padding: 10px 12px;
     cursor: pointer;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: background 0.18s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #c4c7c5;
+}
+
+.sidebar-claude .bottom-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255,255,255,0.08);
 }
 
 .delete-svg-claude {
     color: rgb(197, 79, 0);
     width: 20px;
     height: 20px;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
 
 .delete-svg-claude:hover {
-    background-color: #242127;
+    transform: scale(1.15);
 }
 
-@media (max-width: 600px) {
-    
+.delete-svg {
+    color: #e05c5c;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
 
-    .sidebar-claude  {
-        
-        min-width: 68vw;
+/* Mostrar delete solo en hover del entry */
+.sidebar-claude .recent-entry-claude:hover .delete-svg {
+    opacity: 1;
+}
+
+.delete-svg:hover {
+    transform: scale(1.2);
+}
+
+/* ===============================
+   MOBILE
+================================ */
+@media (max-width: 600px) {
+    .sidebar-claude {
+        min-width: 72vw;
+        max-width: 72vw;
         position: fixed;
         top: 0;
         left: 0;
-        max-width: 68vw;
         height: 100vh;
         z-index: 100;
-
         transform: translateX(-100%);
         opacity: 0;
         pointer-events: none;
-        
     }
 
-    
-
     .sidebar-claude.open {
-    display: inline-flex;
-    height: 100%;
-    z-index: 10;
-    transform: translateX(0);
+        transform: translateX(0);
         opacity: 1;
         pointer-events: auto;
-    
-}
+    }
 
-.sidebar-claude .MenuPC-claude {
-    display: none;
-}
+    .sidebar-claude .MenuPC-claude {
+        display: none;
+    }
 }

@@ -1,12 +1,13 @@
 import './Modal.css'
 import { assets } from "../../assets/assets";
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Context } from '../../Context/Context'
 
 const CLAUDE_MODELS = [
+  { label: 'Claude Sonnet 4.7', value: 'claude-sonnet-4-7' },
   { label: 'Claude Sonnet 4.6', value: 'claude-sonnet-4-6' },
-  { label: 'Claude Haiku 4.5', value: 'claude-haiku-4-5-20251001' },
-  { label: 'Claude Opus 4.6',  value: 'claude-opus-4-6' },
+  { label: 'Claude Haiku 4.5',  value: 'claude-haiku-4-5-20251001' },
+  { label: 'Claude Opus 4.6',   value: 'claude-opus-4-6' },
 ];
 
 const GEMINI_MODELS = [
@@ -27,17 +28,20 @@ const Modal = () => {
   const userStorage = localStorage.getItem("User");
   const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
 
-  const { theme, setTheme, openModal, modelFeature, setOpenModal } = useContext(Context);
+  // Estado local para forzar re-render al cambiar modelo sin hackear `theme`
+  const [selectedModel, setSelectedModel] = useState(null);
+
+  const { openModal, modelFeature, setOpenModal } = useContext(Context);
 
   const saveModel = (storageKey, value) => {
     localStorage.setItem(storageKey, JSON.stringify(value));
+    setSelectedModel(value); // re-render limpio
   };
 
-  // Determinar configuración según el modelo activo
   const config = {
     Claude: {
       storageKey: 'ModelClaude',
-      defaultModel: 'claude-sonnet-4-6',
+      defaultModel: 'claude-sonnet-4-7',
       models: CLAUDE_MODELS,
       currentRaw: localStorage.getItem('ModelClaude'),
     },
@@ -55,40 +59,48 @@ const Modal = () => {
     },
   }[modelFeature] || {};
 
-  const currentModel = config.currentRaw?.replace(/["\\]/g, "") || config.defaultModel;
+  const currentModel = selectedModel
+    ?? config.currentRaw?.replace(/["\\]/g, "")
+    ?? config.defaultModel;
 
-  // ✅ Fix: antes el check `!= 'claude'` nunca era true con un model string real
   if (!config.currentRaw) {
     saveModel(config.storageKey, config.defaultModel);
   }
 
   return (
-    <div className='Modal'>
-      <div onClick={() => setOpenModal(!openModal)}>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-        </svg>
-      </div>
+    <div className="Modal-overlay" onClick={() => setOpenModal(false)}>
+      <div className="Modal" onClick={(e) => e.stopPropagation()}>
 
-      <img src={assets.user_icon} alt="user" />
-      <p className='user-name'>{user}</p>
+        <button className="Modal-close" onClick={() => setOpenModal(false)} aria-label="Cerrar">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
 
-      <div className='Modal-input'>
-        <input type="text" readOnly placeholder={`Modelo actual: ${currentModel}`} />
-        <div className="radio-group">
-          {config.models?.map(({ label, value }) => (
-            <div
-              key={value}
-              className={`radio-option-modal ${currentModel === value ? 'active' : ''}`}
-              onClick={() => {
-                saveModel(config.storageKey, value);
-                setTheme(!theme); // fuerza re-render
-              }}
-            >
-              {label}
-            </div>
-          ))}
+        <img src={assets.user_icon} alt="user" className="Modal-avatar" />
+        <p className="Modal-username">{user}</p>
+
+        <p className="Modal-label">
+          {modelFeature} · <span className="Modal-current-model">{currentModel}</span>
+        </p>
+
+        <div className="Modal-input">
+          <div className="radio-group">
+            {config.models?.map(({ label, value }) => (
+              <div
+                key={value}
+                className={`radio-option-modal ${currentModel === value ? 'active' : ''}`}
+                onClick={() => saveModel(config.storageKey, value)}
+              >
+                {label}
+                {currentModel === value && (
+                  <span className="radio-check">✓</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
+
       </div>
     </div>
   );

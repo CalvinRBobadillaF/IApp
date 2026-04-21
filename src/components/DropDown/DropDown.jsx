@@ -1,5 +1,5 @@
 import { useRef, useEffect, useContext } from "react";
-import './DropDown.css'
+import './DropDown.css';
 import { Context } from "../../Context/Context";
 
 const DropDown = () => {
@@ -25,27 +25,17 @@ const DropDown = () => {
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       {models && (
-        <div
-          className="radio-group"
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: -105,
-            background: "#1e1e1e",
-            marginTop: "10px",
-            borderRadius: "8px",
-            padding: "8px",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-            zIndex: 100,
-          }}
-        >
-          <div className="radio-option" onClick={() => selectModel('ModelGPT', 'gpt-5', 'GPT')}>
+        <div className="dropdown-menu">
+          <div className="radio-option radio-option--gpt"
+            onClick={() => selectModel('ModelGPT', 'gpt-5', 'GPT')}>
             ChatGPT
           </div>
-          <div className="radio-option" onClick={() => selectModel('ModelClaude', 'claude-sonnet-4-6', 'Claude')}>
+          <div className="radio-option radio-option--claude"
+            onClick={() => selectModel('ModelClaude', 'claude-sonnet-4-7', 'Claude')}>
             Claude
           </div>
-          <div className="radio-option" onClick={() => selectModel('Model', 'gemini-2.5-flash', 'Gemini')}>
+          <div className="radio-option radio-option--gemini"
+            onClick={() => selectModel('Model', 'gemini-2.5-flash', 'Gemini')}>
             Gemini
           </div>
         </div>

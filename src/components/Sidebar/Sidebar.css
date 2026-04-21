@@ -1,13 +1,12 @@
+/* ── BASE ── */
 .sidebar {
     min-height: 100vh;
     display: inline-flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: #111113;
+    background-color: #080c14;
     padding: 25px 15px;
     width: auto;
-
-    /* 🔥 Animación base */
     transform: translateX(0);
     opacity: 1;
     transition:
@@ -26,15 +25,25 @@
     cursor: pointer;
     width: 35px;
     color: white;
+    transition: color 0.2s ease;
 }
 
+.sidebar .MenuPC:hover {
+    color: #38bdf8;
+}
+
+/* ── TITLE ── */
 .title {
-    font-size: 16px;
+    font-size: 11px;
     color: white;
     margin-top: 15px;
     margin-bottom: 10px;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
+/* ── NEW CHAT ── */
 .sidebar .new-chat {
     margin-top: 35px;
     margin-bottom: 10px;
@@ -46,63 +55,106 @@
     font-size: 14px;
     cursor: pointer;
     color: white;
-    background-color: #0B0F19;
+    background-color: #0b0f19;
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    transition: background 0.2s ease, transform 0.15s ease;
 }
 
-/* =========================
-   RECENT LIST ANIMATION
-========================= */
+.sidebar .new-chat:hover {
+    background-color: #101828;
+    transform: scale(1.02);
+}
 
+/* ── RECENT LIST ── */
 .sidebar .recent {
     display: flex;
     flex-direction: column;
+    animation: fadeInGemini 0.3s ease;
 }
 
-.sidebar.open .recent-entry {
-    animation: recentItemIn 0.35s ease forwards;
-}
-
-.sidebar.open .recent-entry:nth-child(1) { animation-delay: 0.05s; }
-.sidebar.open .recent-entry:nth-child(2) { animation-delay: 0.1s; }
-.sidebar.open .recent-entry:nth-child(3) { animation-delay: 0.15s; }
-.sidebar.open .recent-entry:nth-child(4) { animation-delay: 0.2s; }
-
-@keyframes recentItemIn {
-    from {
-        opacity: 0;
-        transform: translateX(-8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+@keyframes fadeInGemini {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .recent svg {
     width: 20px;
     height: 20px;
+    flex-shrink: 0;
+    opacity: 0.55;
 }
 
-.sidebar .recent-title {
-    margin-top: 30px;
-    margin-bottom: 20px;
-}
-
+/* ── ENTRY ── */
 .sidebar .recent-entry {
     display: flex;
-    align-items: start;
+    align-items: center;
     gap: 10px;
-    padding: 10px;
-    padding-right: 40px;
-    border-radius: 50px;
+    padding: 9px 12px;
+    border-radius: 10px;
     color: #c4c7c5;
     cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.18s ease, transform 0.15s ease;
 }
 
 .sidebar .recent-entry:hover {
-    background-color: #242127;
+    background-color: rgba(56, 189, 248, 0.08);
+    border-color: rgba(56, 189, 248, 0.15);
+    transform: translateX(2px);
 }
 
+/* Active / selected chat */
+.sidebar .recent-entry.active {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.28);
+    color: #38bdf8;
+}
+
+.sidebar .recent-entry p {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+/* Staggered entrance */
+.sidebar.open .recent-entry {
+    animation: recentItemInGemini 0.3s ease forwards;
+    opacity: 0;
+}
+
+.sidebar.open .recent-entry:nth-child(1) { animation-delay: 0.04s; }
+.sidebar.open .recent-entry:nth-child(2) { animation-delay: 0.08s; }
+.sidebar.open .recent-entry:nth-child(3) { animation-delay: 0.12s; }
+.sidebar.open .recent-entry:nth-child(4) { animation-delay: 0.16s; }
+.sidebar.open .recent-entry:nth-child(5) { animation-delay: 0.20s; }
+
+@keyframes recentItemInGemini {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── DELETE ICON (visible solo en hover) ── */
+.delete-svg {
+    color: #38bdf8;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.sidebar .recent-entry:hover .delete-svg {
+    opacity: 1;
+}
+
+.delete-svg:hover {
+    transform: scale(1.2);
+    color: #7dd3fc;
+}
+
+/* ── BOTTOM ── */
 .setting-svg {
     width: 20px;
     height: 20px;
@@ -111,37 +163,36 @@
 .sidebar .bottom {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 .sidebar .bottom-item {
-    padding-right: 10px;
+    padding: 10px 12px;
     cursor: pointer;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #c4c7c5;
+    transition: background 0.18s ease;
 }
 
-.delete-svg {
-    color: red;
-    width: 20px;
-    height: 20px;
+.sidebar .bottom-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.07);
 }
 
-.delete-svg:hover {
-    background-color: #242127;
-}
-
-/* =========================
-   MOBILE BEHAVIOR (🔥 FIX)
-========================= */
-
+/* ── MOBILE ── */
 @media (max-width: 600px) {
-
     .sidebar {
+        min-width: 72vw;
+        max-width: 72vw;
         position: fixed;
         top: 0;
         left: 0;
-        max-width: 68vw;
         height: 100vh;
         z-index: 100;
-
         transform: translateX(-100%);
         opacity: 0;
         pointer-events: none;

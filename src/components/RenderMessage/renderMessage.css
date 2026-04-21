@@ -1,41 +1,46 @@
 /* ===============================
+   ANIMACIONES DE ENTRADA
+================================ */
+@keyframes msgSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes codeBlockIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===============================
    CONTENEDOR PRINCIPAL
 ================================ */
 .rm-container {
   display: block;
   width: 100%;
   max-width: 100%;
-  height: auto;
-  min-height: min-content;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #e5e7eb;
-  /* Evita que palabras largas rompan el layout */
   overflow-wrap: break-word;
-  word-wrap: break-word;
   word-break: break-word;
+  animation: msgSlideIn 0.25s ease;
 }
 
 /* ===============================
-   PÁRRAFOS Y TEXTO
+   PÁRRAFOS
 ================================ */
 .rm-paragraph {
   display: block;
-  margin-bottom: 1.2rem;
-  /* Mantiene saltos de línea de la IA pero ajusta al ancho disponible */
+  margin-bottom: 1rem;
   white-space: pre-wrap;
   max-width: 100%;
-  overflow: visible;
 }
 
-/* Oculta párrafos que queden vacíos tras el filtrado */
-.rm-paragraph:empty {
-  display: none;
-}
+.rm-paragraph:empty { display: none; }
+.rm-paragraph:last-child { margin-bottom: 0; }
 
 .rm-text-span {
   display: inline;
   white-space: inherit;
-  font-size: 1rem;
 }
 
 /* ===============================
@@ -48,64 +53,111 @@
 
 .rm-italic {
   font-style: italic;
-  opacity: 0.9;
-}
-
-.rm-heading {
-  display: block;
-  margin: 1.5rem 0 0.5rem;
-  font-weight: 700;
-  color: #e9d5ff;
-  line-height: 1.3;
+  opacity: 0.88;
 }
 
 .rm-inline-code {
   background: rgba(168, 85, 247, 0.15);
   border: 1px solid rgba(168, 85, 247, 0.3);
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-family: "Fira Code", monospace;
-  font-size: 0.9em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.88em;
   color: #d8b4fe;
 }
 
 /* ===============================
-   BLOQUE DE CÓDIGO (Code Block)
+   HEADINGS
+================================ */
+.rm-heading {
+  display: block;
+  font-weight: 700;
+  color: #f3f4f6;
+  line-height: 1.3;
+  margin: 1.4rem 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.rm-heading:first-child { margin-top: 0; }
+
+.rm-h1 { font-size: 1.75rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.4rem; }
+.rm-h2 { font-size: 1.45rem; }
+.rm-h3 { font-size: 1.2rem; }
+.rm-h4 { font-size: 1.05rem; }
+.rm-h5, .rm-h6 { font-size: 0.95rem; color: #d1d5db; }
+
+/* ===============================
+   LISTAS
+================================ */
+.rm-list {
+  margin: 0.6rem 0 1rem;
+  padding-left: 1.5rem;
+  list-style: disc;
+  color: #e5e7eb;
+}
+
+.rm-list-item {
+  margin: 0.35rem 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  padding-left: 0.25rem;
+}
+
+/* ===============================
+   CODE BLOCK
 ================================ */
 .code-wrapper-gpt {
   position: relative;
   margin: 1.2rem 0;
   border-radius: 12px;
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  animation: codeBlockIn 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 
 .code-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #1e293b;
-  padding: 8px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #161b22;
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+.code-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Traffic light dots */
+.code-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.code-dot.red    { background: #ff5f57; }
+.code-dot.yellow { background: #febc2e; }
+.code-dot.green  { background: #28c840; }
+
 .code-lang {
-  font-size: 0.75rem;
-  color: #94a3b8;
+  font-size: 0.72rem;
+  color: #8b949e;
+  font-family: "Fira Code", monospace;
   text-transform: uppercase;
-  font-weight: bold;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  margin-left: 6px;
 }
 
 .code-block {
   margin: 0;
-  padding: 16px;
-  font-family: "Fira Code", monospace;
+  padding: 18px 20px;
+  font-family: "Fira Code", "Cascadia Code", monospace;
   font-size: 0.85rem;
-  line-height: 1.5;
-  color: #e5e7eb;
-  /* Scroll horizontal para código largo */
+  line-height: 1.6;
+  color: #c9d1d9;
   overflow-x: auto;
 }
 
@@ -118,152 +170,119 @@
    BOTÓN COPIAR
 ================================ */
 .copy-btn-gpt {
-  background: rgba(168, 85, 247, 0.2);
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  color: #e9d5ff;
-  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8b949e;
+  padding: 4px 12px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.75rem;
-  transition: all 0.2s ease;
+  font-size: 0.73rem;
+  font-weight: 500;
+  transition: all 0.18s ease;
+  white-space: nowrap;
 }
 
 .copy-btn-gpt:hover {
-  background: rgba(168, 85, 247, 0.4);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* ✅ Estado "Copied!" con color verde */
+.copy-btn-gpt.copied {
+  background: rgba(40, 200, 64, 0.15);
+  border-color: rgba(40, 200, 64, 0.4);
+  color: #28c840;
 }
 
 /* ===============================
-   RESPONSIVIDAD (Móvil)
+   MENSAJE DE USUARIO
 ================================ */
-@media (max-width: 768px) {
-  .rm-container {
-    padding: 0 5px;
-    font-size: 0.95rem;
-  }
+.user-msg-content {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #f3f4f6;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
 
-  .rm-paragraph {
-    /* Deja margen para que el texto no toque los bordes del dispositivo */
-    max-width: calc(100vw - 30px);
-  }
+.user-msg-line {
+  display: inline;
+}
 
-  .code-block {
-    font-size: 0.8rem;
-    padding: 12px;
-  }
+/* Código inline en mensajes de usuario */
+.user-inline-code {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.87em;
+  color: #fcd34d;
 }
 
 /* ===============================
-   SCROLLBAR PERSONALIZADA
+   IMÁGENES GENERADAS
 ================================ */
-.code-block::-webkit-scrollbar {
-  height: 6px;
-}
-
-.code-block::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.code-block::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.3);
-  border-radius: 10px;
-}
-
-.code-block::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 85, 247, 0.5);
-}
-
-/* src/components/RenderMessage/renderMessage.css */
-
-/* El contenedor principal que centra todo */
 .rm-image-container {
   width: 100%;
   display: flex;
-  justify-content: center; /* Centra la tarjeta en el chat */
-  margin: 12px 0;
+  justify-content: center;
+  margin: 16px 0;
+  animation: msgSlideIn 0.35s ease;
 }
 
-/* La tarjeta blanca (figure) */
 .rm-image-figure {
   margin: 0;
-  padding: 12px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
-  
-  /* DIMENSIONES CRÍTICAS */
-  width: 100%; 
-  max-width: 450px; /* Evita que sea gigante en pantallas grandes */
-  box-sizing: border-box; /* Importante para que el padding no rompa el ancho */
-  
+  padding: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
-/* La imagen en sí */
-.rm-image {
-  width: 100%;          /* Ocupa todo el ancho de la tarjeta */
-  height: auto;         /* Calcula la altura automáticamente según el ancho */
-  aspect-ratio: 1 / 1;  /* Fuerza a que sea CUADRADA (1024x1024) */
+img.rm-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
   border-radius: 8px;
-  object-fit: cover;    /* Recorta bordes si sobra espacio, pero mantiene proporción */
+  object-fit: cover;
   display: block;
-  background-color: #f0f0f0; /* Color de fondo mientras carga */
+  background: rgba(255,255,255,0.05);
 }
 
-/* El texto de abajo */
 .rm-image-caption {
-  margin-top: 10px;
-  font-size: 0.9rem;
-  color: #555;
-  font-weight: 500;
+  margin-top: 9px;
+  font-size: 0.8rem;
+  color: #6b7280;
   text-align: center;
-  font-family: sans-serif;
+  font-style: italic;
 }
 
-/* ── LISTAS ── */
-.rm-list {
-  margin: 0.75rem 0;
-  padding-left: 1.5rem;
-  list-style: disc;
-  color: #e5e7eb;
-  line-height: 1.8;
+/* ===============================
+   SCROLLBAR DE CÓDIGO
+================================ */
+.code-block::-webkit-scrollbar { height: 5px; }
+.code-block::-webkit-scrollbar-track { background: transparent; }
+.code-block::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+.code-block::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 
-.rm-list-item {
-  margin: 0.3rem 0;
-  font-size: 16px;
-}
-
-/* ── HEADINGS ── */
-.rm-heading { color: #fff; font-weight: 600; margin: 1.1rem 0 0.4rem; line-height: 1.3; }
-.rm-h1 { font-size: 1.8rem; }
-.rm-h2 { font-size: 1.5rem; }
-.rm-h3 { font-size: 1.25rem; }
-.rm-h4 { font-size: 1.1rem; }
-.rm-h5, .rm-h6 { font-size: 1rem; }
-
-/* ── CODE HEADER (asegura que siempre esté visible) ── */
-.code-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #1e293b;
-  padding: 8px 14px;
-  border-radius: 10px 10px 0 0;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-}
-
-.code-lang {
-  font-size: 0.78rem;
-  color: #94a3b8;
-  font-family: "Fira Code", monospace;
-  text-transform: lowercase;
-}
-
-/* Ajuste: el pre no debe tener border-radius arriba si tiene header */
-.code-wrapper-gpt .code-block {
-  border-radius: 0 0 10px 10px;
-  margin: 0;
+/* ===============================
+   RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+  .rm-container { font-size: 0.95rem; }
+  .code-block { font-size: 0.78rem; padding: 14px; }
+  .rm-h1 { font-size: 1.4rem; }
+  .rm-h2 { font-size: 1.2rem; }
 }

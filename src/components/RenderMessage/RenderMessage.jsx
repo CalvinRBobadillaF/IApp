@@ -1,6 +1,44 @@
 import { useMemo, useState, useEffect } from "react";
 import "./renderMessage.css";
 
+/* ============================================================
+   USER MESSAGE — formateo básico para mensajes del usuario
+   Detecta `código inline` y saltos de línea
+============================================================ */
+export const UserMessage = ({ text }) => {
+  if (!text) return null;
+
+  // Dividir por saltos de línea preservando estructura
+  const lines = text.split("\n");
+
+  return (
+    <div className="user-msg-content">
+      {lines.map((line, i) => {
+        // Detectar `código inline`
+        const parts = line.split(/(`[^`]+`)/g);
+        return (
+          <span key={i} className="user-msg-line">
+            {parts.map((part, j) => {
+              if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+                return (
+                  <code key={j} className="user-inline-code">
+                    {part.slice(1, -1)}
+                  </code>
+                );
+              }
+              return <span key={j}>{part}</span>;
+            })}
+            {i < lines.length - 1 && <br />}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ============================================================
+   AI MESSAGE RENDERER
+============================================================ */
 const RenderMessage = ({ tokens }) => {
   const normalized = useMemo(() => {
     if (!Array.isArray(tokens)) return [];
@@ -56,7 +94,11 @@ const RenderMessage = ({ tokens }) => {
 
           case "heading":
             const Tag = `h${t.level || 3}`;
-            return <Tag key={i} className={`rm-heading rm-h${t.level || 3}`}>{t.content}</Tag>;
+            return (
+              <Tag key={i} className={`rm-heading rm-h${t.level || 3}`}>
+                {t.content}
+              </Tag>
+            );
 
           case "list":
             return (
@@ -81,8 +123,7 @@ const RenderMessage = ({ tokens }) => {
   );
 };
 
-/* ── SUBCOMPONENTES ── */
-
+/* ── Inline token renderer ── */
 const TokenRenderer = ({ token }) => {
   switch (token.type) {
     case "text":       return <span className="rm-text-span">{token.content}</span>;
@@ -93,33 +134,36 @@ const TokenRenderer = ({ token }) => {
   }
 };
 
+/* ── CodeBlock con animación de entrada ── */
 const CodeBlock = ({ content, language }) => {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Fallback para entornos sin clipboard API
       const ta = document.createElement("textarea");
       ta.value = content;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
       document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   };
 
   return (
     <div className="code-wrapper-gpt">
       <div className="code-header">
-        <span className="code-lang">{language || "code"}</span>
-        <button className="copy-btn-gpt" onClick={copy}>
-          {copied ? "✓ Copied" : "Copy"}
+        <div className="code-header-left">
+          <span className="code-dot red" />
+          <span className="code-dot yellow" />
+          <span className="code-dot green" />
+          <span className="code-lang">{language || "code"}</span>
+        </div>
+        <button className={`copy-btn-gpt ${copied ? "copied" : ""}`} onClick={copy}>
+          {copied ? "✓ Copied!" : "Copy"}
         </button>
       </div>
       <pre className="code-block">
@@ -129,7 +173,7 @@ const CodeBlock = ({ content, language }) => {
   );
 };
 
-/* ── HELPERS DE IMAGEN ── */
+/* ── Image renderer ── */
 const stringToSeed = (str) => {
   let hash = 0;
   if (!str) return 0;
@@ -167,13 +211,8 @@ const ImageRenderer = ({ prompt, alt }) => {
   return (
     <div className="rm-image-container">
       <figure className="rm-image-figure">
-        <img
-          src={imgSrc}
-          alt={alt || "Generating..."}
-          className="rm-image"
-          loading="lazy"
-          onError={handleError}
-        />
+        <img src={imgSrc} alt={alt || "Generating..."} className="rm-image"
+          loading="lazy" onError={handleError} />
         <figcaption className="rm-image-caption">
           {cleanPrompt}{hasError ? " (Turbo mode)" : ""}
         </figcaption>
