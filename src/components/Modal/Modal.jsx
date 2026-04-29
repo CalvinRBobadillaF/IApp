@@ -4,7 +4,7 @@ import { useContext, useState } from 'react';
 import { Context } from '../../Context/Context'
 
 const CLAUDE_MODELS = [
-  { label: 'Claude Sonnet 4.7', value: 'claude-sonnet-4-7' },
+  { label: 'Claude opus 4.7', value: 'claude-opus-4-7' },
   { label: 'Claude Sonnet 4.6', value: 'claude-sonnet-4-6' },
   { label: 'Claude Haiku 4.5',  value: 'claude-haiku-4-5-20251001' },
   { label: 'Claude Opus 4.6',   value: 'claude-opus-4-6' },
@@ -41,7 +41,7 @@ const Modal = () => {
   const config = {
     Claude: {
       storageKey: 'ModelClaude',
-      defaultModel: 'claude-sonnet-4-7',
+      defaultModel: 'claude-opus-4-7',
       models: CLAUDE_MODELS,
       currentRaw: localStorage.getItem('ModelClaude'),
     },

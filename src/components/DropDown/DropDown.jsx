@@ -31,7 +31,7 @@ const DropDown = () => {
             ChatGPT
           </div>
           <div className="radio-option radio-option--claude"
-            onClick={() => selectModel('ModelClaude', 'claude-sonnet-4-7', 'Claude')}>
+            onClick={() => selectModel('ModelClaude', 'claude-opus-4-7', 'Claude')}>
             Claude
           </div>
           <div className="radio-option radio-option--gemini"

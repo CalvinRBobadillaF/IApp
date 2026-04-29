@@ -35,11 +35,29 @@ const MainClaude = () => {
   }, [currentChat?.messages, loading]);
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      onSent();
-    }
-  };
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    onSent();
+  }
+  // Si presiona Shift+Enter, deja que se haga el salto de línea normal
+};
+
+const autoResize = (element) => {
+  element.style.height = "auto";
+  element.style.height = Math.min(element.scrollHeight, 200) + "px"; // Máximo 200px
+};
+
+  const inputRef = useRef(null);
+
+  const scrollInputToEnd = () => {
+  if (inputRef.current) {
+    setTimeout(() => {
+      inputRef.current.selectionStart = inputRef.current.value.length;
+      inputRef.current.selectionEnd = inputRef.current.value.length;
+      inputRef.current.scrollLeft = inputRef.current.scrollWidth;
+    }, 0);
+  }
+};
 
   return (
     <div className="main-claude">
@@ -157,13 +175,17 @@ const MainClaude = () => {
       {/* --- Barra de Búsqueda Inferior --- */}
       <div className="main-bottom-claude">
         <div className="search-box-claude">
-          <input
-            type="text"
-            placeholder="Enter prompt here"
-            value={userPrompt}
-            onChange={(e) => setUserPrompt(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+          <textarea
+  ref={inputRef}
+  placeholder="Enter prompt here"
+  value={userPrompt}
+  onChange={(e) => {
+    setUserPrompt(e.target.value);
+    autoResize(e.target); // Auto ajustar altura
+  }}
+  onKeyDown={handleKeyDown}
+  rows={1}
+/>
           <div>
             
             {userPrompt.length > 0 && (
