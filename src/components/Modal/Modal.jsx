@@ -1,10 +1,10 @@
 import './Modal.css'
 import { assets } from "../../assets/assets";
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Context } from '../../Context/Context'
 
 const CLAUDE_MODELS = [
-  { label: 'Claude opus 4.7', value: 'claude-opus-4-7' },
+  { label: 'Claude Opus 4.7',   value: 'claude-opus-4-7' },
   { label: 'Claude Sonnet 4.6', value: 'claude-sonnet-4-6' },
   { label: 'Claude Haiku 4.5',  value: 'claude-haiku-4-5-20251001' },
   { label: 'Claude Opus 4.6',   value: 'claude-opus-4-6' },
@@ -18,54 +18,56 @@ const GEMINI_MODELS = [
 ];
 
 const GPT_MODELS = [
-  { label: 'GPT-5 Nano', value: 'gpt-5-nano' },
-  { label: 'GPT-5 Mini', value: 'gpt-5-mini' },
-  { label: 'GPT-5.2',    value: 'gpt-5.2' },
-  { label: 'GPT-5',      value: 'gpt-5' },
+  { label: 'GPT-5.5',      value: 'gpt-5.5' },       // NUEVO
+  { label: 'GPT-5',        value: 'gpt-5' },
+  { label: 'GPT-5.2',      value: 'gpt-5.2' },
+  { label: 'GPT-5 Mini',   value: 'gpt-5-mini' },
+  { label: 'GPT-5 Nano',   value: 'gpt-5-nano' },
 ];
+
+// Config por feature — fuera del componente para no recrearse en cada render
+const FEATURE_CONFIG = {
+  Claude: { storageKey: 'ModelClaude', defaultModel: 'claude-opus-4-7', models: CLAUDE_MODELS },
+  GPT:    { storageKey: 'ModelGPT',    defaultModel: 'gpt-5',            models: GPT_MODELS    },
+  Gemini: { storageKey: 'Model',       defaultModel: 'gemini-2.5-flash', models: GEMINI_MODELS },
+};
 
 const Modal = () => {
   const userStorage = localStorage.getItem("User");
   const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
 
-  // Estado local para forzar re-render al cambiar modelo sin hackear `theme`
-  const [selectedModel, setSelectedModel] = useState(null);
-
   const { openModal, modelFeature, setOpenModal } = useContext(Context);
 
-  const saveModel = (storageKey, value) => {
-    localStorage.setItem(storageKey, JSON.stringify(value));
-    setSelectedModel(value); // re-render limpio
+  const config = FEATURE_CONFIG[modelFeature] ?? FEATURE_CONFIG.Gemini;
+
+  // FIX #1: Leer modelo inicial de localStorage correctamente
+  const getStoredModel = () => {
+    const raw = localStorage.getItem(config.storageKey);
+    return raw ? raw.replace(/["\\]/g, "") : config.defaultModel;
   };
 
-  const config = {
-    Claude: {
-      storageKey: 'ModelClaude',
-      defaultModel: 'claude-opus-4-7',
-      models: CLAUDE_MODELS,
-      currentRaw: localStorage.getItem('ModelClaude'),
-    },
-    GPT: {
-      storageKey: 'ModelGPT',
-      defaultModel: 'gpt-5',
-      models: GPT_MODELS,
-      currentRaw: localStorage.getItem('ModelGPT'),
-    },
-    Gemini: {
-      storageKey: 'Model',
-      defaultModel: 'gemini-2.5-flash',
-      models: GEMINI_MODELS,
-      currentRaw: localStorage.getItem('Model'),
-    },
-  }[modelFeature] || {};
+  const [selectedModel, setSelectedModel] = useState(getStoredModel);
 
-  const currentModel = selectedModel
-    ?? config.currentRaw?.replace(/["\\]/g, "")
-    ?? config.defaultModel;
+  // FIX #2: Resetear selectedModel cuando cambia el modelFeature
+  // Sin esto, al pasar de Claude a GPT el checkmark quedaba en el modelo
+  // de Claude hasta que el usuario hacía clic en algo.
+  useEffect(() => {
+    setSelectedModel(getStoredModel());
+  }, [modelFeature]);
 
-  if (!config.currentRaw) {
-    saveModel(config.storageKey, config.defaultModel);
-  }
+  // FIX #3: Inicializar el modelo en localStorage si no existe
+  // ANTES: esto se hacía en el body del render (side-effect durante render)
+  // lo que podía causar re-renders infinitos. Ahora con useEffect es correcto.
+  useEffect(() => {
+    if (!localStorage.getItem(config.storageKey)) {
+      localStorage.setItem(config.storageKey, JSON.stringify(config.defaultModel));
+    }
+  }, [config.storageKey, config.defaultModel]);
+
+  const saveModel = (value) => {
+    localStorage.setItem(config.storageKey, JSON.stringify(value));
+    setSelectedModel(value);
+  };
 
   return (
     <div className="Modal-overlay" onClick={() => setOpenModal(false)}>
@@ -81,19 +83,19 @@ const Modal = () => {
         <p className="Modal-username">{user}</p>
 
         <p className="Modal-label">
-          {modelFeature} · <span className="Modal-current-model">{currentModel}</span>
+          {modelFeature} · <span className="Modal-current-model">{selectedModel}</span>
         </p>
 
         <div className="Modal-input">
           <div className="radio-group">
-            {config.models?.map(({ label, value }) => (
+            {config.models.map(({ label, value }) => (
               <div
                 key={value}
-                className={`radio-option-modal ${currentModel === value ? 'active' : ''}`}
-                onClick={() => saveModel(config.storageKey, value)}
+                className={`radio-option-modal ${selectedModel === value ? 'active' : ''}`}
+                onClick={() => saveModel(value)}
               >
                 {label}
-                {currentModel === value && (
+                {selectedModel === value && (
                   <span className="radio-check">✓</span>
                 )}
               </div>

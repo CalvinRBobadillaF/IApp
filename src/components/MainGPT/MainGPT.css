@@ -1,5 +1,4 @@
 :root {
-  /* Paleta principal personalizada */
   --deep: #100f11;
   --panel: #625f54;
   --moss: #5c582d;
@@ -11,7 +10,7 @@
 }
 
 .MenuMobile-gpt {
-    display: none;
+  display: none;
 }
 
 .main-gpt {
@@ -153,9 +152,7 @@
   width: 100%;
 }
 
-/* 🔥 CORRECCIÓN CLAVE: Solo aplicamos estilo 'avatar' a las imágenes directas del contenedor
-   de mensaje, para no afectar a las imágenes generadas dentro del contenido */
-.result-title-gpt > img, 
+.result-title-gpt > img,
 .result-data-gpt > img {
   width: 40px;
   height: 40px;
@@ -168,13 +165,12 @@
   max-width: 100%;
 }
 
-/* Burbujas de texto unificadas */
-.result-title-gpt p, 
+.result-title-gpt p,
 .ai-message-gpt .message-content {
   font-size: 17px;
   line-height: 1.8;
   background: linear-gradient(180deg, rgba(22, 20, 22, 0.85), rgba(16, 15, 17, 0.9));
-  border: 1px solid rgba(168, 85, 247, 0.3); /* Borde púrpura sutil */
+  border: 1px solid rgba(168, 85, 247, 0.3);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   border-radius: 12px;
   padding: 1.25rem;
@@ -195,24 +191,47 @@
   background: linear-gradient(to top, #06000f 70%, transparent);
 }
 
+/* FIX: align-items: flex-end para que el botón quede abajo con textarea multilinea */
 .main-gpt .search-box-gpt {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 15px;
   background-color: #1a1421;
   padding: 15px 25px;
-  border-radius: 50px;
+  border-radius: 25px;
   border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
-.search-box-gpt input {
+/* NUEVO: textarea en lugar de input — mismos estilos que MainClaude */
+.search-box-gpt textarea {
   flex: 1;
   background: transparent;
   border: none;
   outline: none;
   font-size: 18px;
   color: white;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.search-box-gpt textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Scroll bonito dentro del textarea */
+.search-box-gpt textarea::-webkit-scrollbar {
+  width: 6px;
+}
+.search-box-gpt textarea::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.3);
+  border-radius: 10px;
 }
 
 .search-box-gpt div {
@@ -234,7 +253,7 @@
   color: #71717a;
 }
 
-/* --- THINKING / REASONING --- */
+/* --- THINKING --- */
 .thinking-gpt {
   font-style: italic;
   padding: 10px;
@@ -276,43 +295,41 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* --- ESTILOS PARA IMÁGENES GENERADAS (POLLINATIONS) --- */
+/* --- IMÁGENES GENERADAS --- */
 .rm-image-container {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .rm-image-figure {
-    margin: 0;
-    max-width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: none;
+  margin: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Esta clase sobreescribe cualquier estilo global de img para la imagen generada */
 img.rm-image {
-    width: 100%;             /* Ocupa el ancho disponible */
-    max-width: 500px;        /* Límite razonable para que no sea gigante */
-    height: auto;            /* Mantiene proporción */
-    border-radius: 12px !important; /* Bordes suaves, forzamos para quitar el 50% circular */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    object-fit: contain;
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  object-fit: contain;
 }
 
 .rm-image-caption {
-    font-size: 0.85rem;
-    color: #999f92;
-    text-align: center;
-    margin-top: 10px;
-    font-style: italic;
-    background: rgba(0,0,0,0.2);
-    padding: 5px 10px;
-    border-radius: 20px;
+  font-size: 0.85rem;
+  color: #999f92;
+  text-align: center;
+  margin-top: 10px;
+  font-style: italic;
+  background: rgba(0,0,0,0.2);
+  padding: 5px 10px;
+  border-radius: 20px;
 }
 
 /* --- RESPONSIVE --- */
@@ -335,22 +352,16 @@ img.rm-image {
 
   .main-gpt .card-gpt {
     height: 100px;
-    padding: 15px;
-    background: linear-gradient(135deg, #120018 0%, #2b0a3d 45%, #5a189a 100%);
-    border-radius: 12px;
-    position: relative;
-    cursor: pointer;
-    transition: transform 0.2s ease;
   }
 }
 
 @keyframes pulse {
-    0% { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
-    50% { opacity: 1; text-shadow: 0 0 15px rgba(56, 189, 248, 0.6); }
-    100% { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
+  0%   { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
+  50%  { opacity: 1;   text-shadow: 0 0 15px rgba(56, 189, 248, 0.6); }
+  100% { opacity: 0.4; text-shadow: 0 0 5px rgba(56, 189, 248, 0.2); }
 }
 
 @keyframes loader {
-    0% { background-position: -800px 0px; }
-    100% { background-position: 800px 0px; }
+  0%   { background-position: -800px 0px; }
+  100% { background-position: 800px 0px; }
 }

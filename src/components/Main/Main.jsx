@@ -4,212 +4,192 @@ import { assets } from "../../assets/assets";
 import { Context } from "../../Context/Context";
 import Modal from "../Modal/Modal";
 import DropDown from "../DropDown/DropDown";
-import RenderMessage, {UserMessage} from "../RenderMessage/RenderMessage";
+import RenderMessage, { UserMessage } from "../RenderMessage/RenderMessage";
 
 const Main = () => {
-    const {
-        currentChat,
-        onSent,
-        loading,
-        userPrompt,
-        setUserPrompt,
-        openSidebar,
-        setOpenModal,
-        openModal,
-        models,
-        setModels,
-        setOpenSidebar
-    } = useContext(Context);
+  const {
+    currentChat,
+    onSent,
+    loading,
+    userPrompt,
+    setUserPrompt,
+    openSidebar,
+    setOpenModal,
+    openModal,
+    models,
+    setModels,
+    setOpenSidebar
+  } = useContext(Context);
 
-    // Referencia para el scroll automático
-    const scrollRef = useRef(null);
+  const scrollRef = useRef(null);
+  const inputRef  = useRef(null);
 
-    const userStorage = localStorage.getItem("User");
-    const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
+  const userStorage = localStorage.getItem("User");
+  const user = userStorage ? userStorage.replace(/["\\]/g, "") : "User";
 
-    // Efecto para bajar el scroll automáticamente cuando llega un mensaje
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [currentChat?.messages, loading]);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [currentChat?.messages, loading]);
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            onSent();
-        }
-    };
+  // FIX: Shift+Enter = salto de línea, Enter solo = enviar
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
-    return (
-        <div className="main">
+  const autoResize = (element) => {
+    element.style.height = "auto";
+    element.style.height = Math.min(element.scrollHeight, 200) + "px";
+  };
 
-            {/* NAV */}
-            <div className="nav">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    onClick={() => setOpenSidebar(!openSidebar)}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="MenuMobile"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                    />
-                </svg>
+  // Reset height del textarea al enviar
+  const handleSend = () => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
+    onSent();
+  };
 
-                <div className="title-div">
-                    <p className="Title">Gemini</p>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        onClick={() => setModels(!models)}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="size-6"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                        />
-                    </svg>
+  return (
+    <div className="main">
 
-                    {models && <DropDown />}
-                </div>
+      {/* NAV */}
+      <div className="nav">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          onClick={() => setOpenSidebar(!openSidebar)}
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          className="MenuMobile"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
 
-                <img
-                    src={assets.user_icon}
-                    alt="user"
-                    onClick={() => setOpenModal(!openModal)}
-                    className="profile-img"
-                />
-            </div>
-
-            {/* MAIN CONTENT */}
-            <div className="main-container">
-                {!currentChat || currentChat.messages.length === 0 ? (
-                    <>
-                        <div className="greet">
-                            <span>
-                                Hello <span className="user-name">{user}</span>
-                            </span>
-                            <p>How can I help you?</p>
-                        </div>
-
-                        <div className="cards">
-                            <div className="card" onClick={() => onSent("Suggest ideas to use AI effectively")}>
-                                <p>Suggest ideas to use AI effectively</p>
-                                <img src={assets.compass_icon} alt="" />
-                            </div>
-
-                            <div className="card" onClick={() => onSent("1 month workout routine to get in shape")}>
-                                <p>1 month workout routine to get in shape</p>
-                                <img src={assets.bulb_icon} alt="" />
-                            </div>
-
-                            <div className="card" onClick={() => onSent("Create a story about dogs and cats")}>
-                                <p>Create a story about dogs and cats</p>
-                                <img src={assets.message_icon} alt="" />
-                            </div>
-
-                            <div className="card" onClick={() => onSent("Create a simple Tetris game in Python")}>
-                                <p>Create a simple Tetris game in Python</p>
-                                <img src={assets.code_icon} alt="" />
-                            </div>
-                        </div>
-                    </>
-                ) : (
-                    <div className="result" ref={scrollRef}>
-                        {currentChat.messages.map((msg, i) => (
-                            <div
-                                key={i}
-                                className={
-                                    msg.role === "user"
-                                        ? "result-title user-message"
-                                        : "result-data ai-message"
-                                }
-                            >
-                                <img
-                                    src={
-                                        msg.role === "user"
-                                            ? assets.user_icon
-                                            : assets.gemini_icon
-                                    }
-                                    alt=""
-                                />
-
-                                <div className="message-content">
-                                    {/* USER MESSAGE */}
-                                    {msg.role === "user" && <UserMessage text={msg.text} />}
-
-                                    {/* AI MESSAGE */}
-                                    {msg.role === "model" && (
-                                        <RenderMessage tokens={msg.tokens} model={'gemini'} />
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Loading */}
-                        {loading && currentChat.messages.at(-1)?.role === "user" && (
-                            <div className="result-data ai-message">
-                                <img src={assets.gemini_icon} alt="" />
-                                <div className="thinking-gemini">✨ Thinking...</div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {openModal && <Modal />}
-            </div>
-
-            {/* INPUT */}
-            <div className="main-bottom">
-                <div className="search-box">
-                    <input
-                        type="text"
-                        placeholder="Enter prompt here"
-                        value={userPrompt}
-                        onChange={(e) => setUserPrompt(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                    />
-
-                    <div>
-                        <img src={assets.gallery_icon} alt="" />
-                        <img src={assets.mic_icon} alt="" />
-
-                        {userPrompt.length > 0 && (
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                onClick={() => onSent()}
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="1.5"
-                                stroke="currentColor"
-                                className="send-icon"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
-                                />
-                            </svg>
-                        )}
-                    </div>
-                </div>
-
-                <p className="bottom-info">
-                    Gemini may display incorrect information. Always verify important facts.
-                </p>
-            </div>
+        <div className="title-div">
+          <p className="Title">Gemini</p>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            onClick={() => setModels(!models)}
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            className="size-6"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+          {models && <DropDown />}
         </div>
-    );
+
+        <img
+          src={assets.user_icon}
+          alt="user"
+          onClick={() => setOpenModal(!openModal)}
+          className="profile-img"
+        />
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="main-container">
+        {!currentChat || currentChat.messages.length === 0 ? (
+          <>
+            <div className="greet">
+              <span>Hello <span className="user-name">{user}</span></span>
+              <p>How can I help you?</p>
+            </div>
+
+            <div className="cards">
+              <div className="card" onClick={() => onSent("Suggest ideas to use AI effectively")}>
+                <p>Suggest ideas to use AI effectively</p>
+                <img src={assets.compass_icon} alt="" />
+              </div>
+              <div className="card" onClick={() => onSent("1 month workout routine to get in shape")}>
+                <p>1 month workout routine to get in shape</p>
+                <img src={assets.bulb_icon} alt="" />
+              </div>
+              <div className="card" onClick={() => onSent("Create a story about dogs and cats")}>
+                <p>Create a story about dogs and cats</p>
+                <img src={assets.message_icon} alt="" />
+              </div>
+              <div className="card" onClick={() => onSent("Create a simple Tetris game in Python")}>
+                <p>Create a simple Tetris game in Python</p>
+                <img src={assets.code_icon} alt="" />
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="result" ref={scrollRef}>
+            {currentChat.messages.map((msg, i) => (
+              <div
+                key={i}
+                className={msg.role === "user" ? "result-title user-message" : "result-data ai-message"}
+              >
+                <img src={msg.role === "user" ? assets.user_icon : assets.gemini_icon} alt="" />
+                <div className="message-content">
+                  {msg.role === "user" && <UserMessage text={msg.text} />}
+                  {msg.role === "model" && <RenderMessage tokens={msg.tokens} model={'gemini'} />}
+                </div>
+              </div>
+            ))}
+
+            {loading && currentChat.messages.at(-1)?.role === "user" && (
+              <div className="result-data ai-message">
+                <img src={assets.gemini_icon} alt="" />
+                <div className="thinking-gemini">✨ Thinking...</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {openModal && <Modal />}
+      </div>
+
+      {/* INPUT — ahora textarea */}
+      <div className="main-bottom">
+        <div className="search-box">
+          <textarea
+            ref={inputRef}
+            placeholder="Enter prompt here"
+            value={userPrompt}
+            rows={1}
+            onChange={(e) => {
+              setUserPrompt(e.target.value);
+              autoResize(e.target);
+            }}
+            onKeyDown={handleKeyDown}
+          />
+
+          <div>
+            <img src={assets.gallery_icon} alt="" />
+            <img src={assets.mic_icon} alt="" />
+            {userPrompt.length > 0 && (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                onClick={handleSend}
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="send-icon"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+              </svg>
+            )}
+          </div>
+        </div>
+
+        <p className="bottom-info">
+          Gemini may display incorrect information. Always verify important facts.
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default Main;
