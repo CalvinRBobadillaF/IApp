@@ -193,7 +193,7 @@ const ImageRenderer = ({ prompt, alt }) => {
 
   useEffect(() => {
     setImgSrc(
-      `https://gen.pollinations.ai/image/${safePrompt}?width=1024&height=1024&nologo=true&model=flux&seed=${seed}&key=pk_ASNnKAZ2SQ7YTZtX`
+      `https://gen.pollinations.ai/image/${safePrompt}?width=1024&height=1024&nologo=true&model=flux&seed=${seed}`
     );
     setHasError(false);
   }, [safePrompt, seed]);

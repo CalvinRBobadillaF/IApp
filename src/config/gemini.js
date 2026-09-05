@@ -6,7 +6,7 @@ export async function main(prompt) {
   const apiKey = rawKey?.replace(/["\\]/g, "");
 
   const userModel = localStorage.getItem("Model");
-  const model = userModel?.replace(/["\\]/g, "") || "gemini-2.5-flash";
+  const model = userModel?.replace(/["\\]/g, "") || "gemini-3.8-flash";
 
   if (!apiKey) {
     return "Error: No se encontró la API Key de Gemini.";

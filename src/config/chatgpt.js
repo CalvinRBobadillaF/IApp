@@ -22,7 +22,7 @@ export const MainGPT = async (prompt) => {
   const apiKey = rawKey?.replace(/["\\]/g, "");
 
   const userModel = localStorage.getItem("ModelGPT");
-  const model = userModel?.replace(/["\\]/g, "") || "gpt-5";
+  const model = userModel?.replace(/["\\]/g, "") || "gpt-5.6-terra";
 
   if (!apiKey) {
     return "Error: No se encontró la API Key de OpenAI.";

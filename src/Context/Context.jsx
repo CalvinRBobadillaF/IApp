@@ -16,6 +16,21 @@ const loadState = (key, defaultValue) => {
   }
 };
 
+const getInitialModelFeature = () => {
+  const preferred = localStorage.getItem("ModelFeature");
+  const keyForModel = {
+    Gemini: "Gemini Key",
+    GPT: "GPT Key",
+    Claude: "Claude Key",
+  };
+
+  if (keyForModel[preferred] && localStorage.getItem(keyForModel[preferred])) {
+    return preferred;
+  }
+
+  return Object.keys(keyForModel).find((model) => localStorage.getItem(keyForModel[model])) || "Gemini";
+};
+
 const ContextProvider = ({ children }) => {
   /* ============================================================
      ESTADO
@@ -32,7 +47,7 @@ const ContextProvider = ({ children }) => {
   const [GPTKey, setGPTKey] = useState("");
   const [claudeKey, setClaudeKey] = useState("");
 
-  const [modelFeature, setModelFeature] = useState("Gemini");
+  const [modelFeature, setModelFeature] = useState(getInitialModelFeature);
   const [currentChatId, setCurrentChatId] = useState(() => loadState("currentChatId", null));
   const [chatsByModel, setChatsByModel] = useState(() => 
     loadState("chatsByModel", { Gemini: [], GPT: [], Claude: [] })
@@ -55,6 +70,10 @@ const ContextProvider = ({ children }) => {
     localStorage.setItem("chatsByModel", JSON.stringify(chatsByModel));
     localStorage.setItem("currentChatId", JSON.stringify(currentChatId));
   }, [chatsByModel, currentChatId]);
+
+  useEffect(() => {
+    localStorage.setItem("ModelFeature", modelFeature);
+  }, [modelFeature]);
 
   useEffect(() => {
     const modelChats = chatsByModel[modelFeature] || [];
@@ -102,19 +121,14 @@ const ContextProvider = ({ children }) => {
   /* ============================================================
      LÓGICA DE ENVÍO
      ============================================================ */
-  const delayWord = (i, word) => {
-    setTimeout(() => {
-      setResultData((prev) => prev + word);
-    }, 25 * i);
-  };
-
   const onSent = async (customPrompt) => {
     const prompt = customPrompt ?? userPrompt;
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || loading) return;
 
+    const activeModel = modelFeature;
     let activeChatId = currentChatId;
     if (!activeChatId) {
-      activeChatId = newChat();
+      activeChatId = crypto.randomUUID();
     }
 
     setLoading(true);
@@ -123,33 +137,28 @@ const ContextProvider = ({ children }) => {
 
     const userMessage = { role: "user", text: prompt };
     
-    setChatsByModel(prev => ({
-      ...prev,
-      [modelFeature]: prev[modelFeature].map(chat =>
-        chat.id === activeChatId
+    setCurrentChatId(activeChatId);
+    setChatsByModel((prev) => {
+      const modelChats = prev[activeModel] || [];
+      const chatExists = modelChats.some((chat) => chat.id === activeChatId);
+      const nextChats = chatExists
+        ? modelChats.map((chat) => chat.id === activeChatId
           ? { ...chat, messages: [...chat.messages, userMessage] }
-          : chat
-      )
-    }));
+          : chat)
+        : [...modelChats, { id: activeChatId, messages: [userMessage] }];
+
+      return { ...prev, [activeModel]: nextChats };
+    });
 
     try {
-      const response = await sendPrompt({ model: modelFeature, prompt });
-
-      // Efecto visual "Typing" (simple html para streaming visual)
-      const formatted = response
-        .split("**")
-        .map((seg, i) => (i % 2 === 1 ? `<b>${seg}</b>` : seg))
-        .join("")
-        .replace(/\*/g, "<br/>");
-
-      formatted.split(" ").forEach((w, i) => delayWord(i, w + " "));
+      const response = await sendPrompt({ model: activeModel, prompt });
 
       // Parseo real guardado en historial (incluyendo imágenes)
       const tokens = parsedMessage(response);
       
       setChatsByModel(prev => ({
         ...prev,
-        [modelFeature]: prev[modelFeature].map(chat =>
+        [activeModel]: (prev[activeModel] || []).map(chat =>
           chat.id === activeChatId
             ? { ...chat, messages: [...chat.messages, { role: "model", tokens }] }
             : chat
@@ -170,6 +179,13 @@ const ContextProvider = ({ children }) => {
         localStorage.removeItem('Gemini Key')
         localStorage.removeItem('GPT Key')
         localStorage.removeItem('Claude Key')
+        localStorage.removeItem('User')
+        localStorage.removeItem('Model')
+        localStorage.removeItem('ModelGPT')
+        localStorage.removeItem('ModelClaude')
+        localStorage.removeItem('ModelFeature')
+        localStorage.removeItem('currentChatId')
+        localStorage.removeItem('chatsByModel')
         window.location.reload()
   }
 

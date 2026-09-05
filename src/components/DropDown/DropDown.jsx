@@ -8,6 +8,7 @@ const DropDown = () => {
 
   const selectModel = (storageKey, value, feature) => {
     localStorage.setItem(storageKey, JSON.stringify(value));
+    localStorage.setItem('ModelFeature', feature);
     setModelFeature(feature);
     setModels(false);
   };
@@ -27,15 +28,15 @@ const DropDown = () => {
       {models && (
         <div className="dropdown-menu">
           <div className="radio-option radio-option--gpt"
-            onClick={() => selectModel('ModelGPT', 'gpt-5', 'GPT')}>
+            onClick={() => selectModel('ModelGPT', 'gpt-5.6-terra', 'GPT')}>
             ChatGPT
           </div>
           <div className="radio-option radio-option--claude"
-            onClick={() => selectModel('ModelClaude', 'claude-opus-4-7', 'Claude')}>
+            onClick={() => selectModel('ModelClaude', 'claude-opus-5', 'Claude')}>
             Claude
           </div>
           <div className="radio-option radio-option--gemini"
-            onClick={() => selectModel('Model', 'gemini-2.5-flash', 'Gemini')}>
+            onClick={() => selectModel('Model', 'gemini-3.8-flash', 'Gemini')}>
             Gemini
           </div>
         </div>

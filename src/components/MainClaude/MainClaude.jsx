@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useEffect } from "react";
+import React, { useContext, useRef, useEffect } from "react";
 import './MainClaude.css';
 import { assets } from "../../assets/assets";
 import { Context } from "../../Context/Context";
@@ -49,15 +49,10 @@ const autoResize = (element) => {
 
   const inputRef = useRef(null);
 
-  const scrollInputToEnd = () => {
-  if (inputRef.current) {
-    setTimeout(() => {
-      inputRef.current.selectionStart = inputRef.current.value.length;
-      inputRef.current.selectionEnd = inputRef.current.value.length;
-      inputRef.current.scrollLeft = inputRef.current.scrollWidth;
-    }, 0);
-  }
-};
+  const handleSend = () => {
+    if (inputRef.current) inputRef.current.style.height = "auto";
+    onSent();
+  };
 
   return (
     <div className="main-claude">
@@ -191,7 +186,7 @@ const autoResize = (element) => {
             {userPrompt.length > 0 && (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                onClick={() => onSent()}
+                onClick={handleSend}
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth="1.5"

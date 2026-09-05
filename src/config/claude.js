@@ -7,7 +7,11 @@ export async function MainClaude(prompt) {
   const apiKey = rawKey?.replace(/["\\]/g, "");
 
   const userModel = localStorage.getItem("ModelClaude");
-  const model = userModel?.replace(/["\\]/g, "") || "claude-sonnet-4-7";
+  const model = userModel?.replace(/["\\]/g, "") || "claude-opus-5";
+
+  if (!apiKey) {
+    return "Error: No se encontró la API Key de Claude.";
+  }
 
   const client = new Anthropic({
     apiKey,
@@ -29,6 +33,8 @@ export async function MainClaude(prompt) {
     );
   } catch (error) {
     console.error("Error en claudeService:", error);
+    if (error.status === 401 || error.status === 403) return "Error: API Key de Claude inválida.";
+    if (error.status === 429) return "Error: Has excedido tu cuota de Claude.";
     throw error;
   }
 }

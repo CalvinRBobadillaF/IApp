@@ -4,32 +4,30 @@ import { useContext, useState, useEffect } from 'react';
 import { Context } from '../../Context/Context'
 
 const CLAUDE_MODELS = [
-  { label: 'Claude Opus 4.7',   value: 'claude-opus-4-7' },
-  { label: 'Claude Sonnet 4.6', value: 'claude-sonnet-4-6' },
-  { label: 'Claude Haiku 4.5',  value: 'claude-haiku-4-5-20251001' },
-  { label: 'Claude Opus 4.6',   value: 'claude-opus-4-6' },
+  { label: 'Claude Opus 5', value: 'claude-opus-5' },
+  { label: 'Claude Sonnet 5', value: 'claude-sonnet-5' },
+  { label: 'Claude Haiku 4.5', value: 'claude-haiku-4-5-20251001' },
 ];
 
 const GEMINI_MODELS = [
-  { label: 'Gemini Flash',  value: 'gemini-2.5-flash' },
-  { label: 'Gemini Pro',    value: 'gemini-2.5-pro' },
-  { label: 'Gemini Ultra',  value: 'gemini-3-pro-preview' },
-  { label: 'Gemini Lite',   value: 'gemini-2.5-flash-lite' },
+  { label: 'Gemini 3.8 Flash', value: 'gemini-3.8-flash' },
+  { label: 'Gemini 3.7 Flash', value: 'gemini-3.7-flash' },
+  { label: 'Gemini 3.5 Flash', value: 'gemini-3.5-flash' },
+  { label: 'Gemini 3.5 Flash-Lite', value: 'gemini-3.5-flash-lite' },
+  { label: 'Gemini 3.1 Pro (Preview)', value: 'gemini-3.1-pro-preview' },
 ];
 
 const GPT_MODELS = [
-  { label: 'GPT-5.5',      value: 'gpt-5.5' },       // NUEVO
-  { label: 'GPT-5',        value: 'gpt-5' },
-  { label: 'GPT-5.2',      value: 'gpt-5.2' },
-  { label: 'GPT-5 Mini',   value: 'gpt-5-mini' },
-  { label: 'GPT-5 Nano',   value: 'gpt-5-nano' },
+  { label: 'GPT-5.6 Sol', value: 'gpt-5.6-sol' },
+  { label: 'GPT-5.6 Terra', value: 'gpt-5.6-terra' },
+  { label: 'GPT-5.6 Luna', value: 'gpt-5.6-luna' },
 ];
 
 // Config por feature — fuera del componente para no recrearse en cada render
 const FEATURE_CONFIG = {
-  Claude: { storageKey: 'ModelClaude', defaultModel: 'claude-opus-4-7', models: CLAUDE_MODELS },
-  GPT:    { storageKey: 'ModelGPT',    defaultModel: 'gpt-5',            models: GPT_MODELS    },
-  Gemini: { storageKey: 'Model',       defaultModel: 'gemini-2.5-flash', models: GEMINI_MODELS },
+  Claude: { storageKey: 'ModelClaude', defaultModel: 'claude-opus-5', models: CLAUDE_MODELS },
+  GPT:    { storageKey: 'ModelGPT', defaultModel: 'gpt-5.6-terra', models: GPT_MODELS },
+  Gemini: { storageKey: 'Model', defaultModel: 'gemini-3.8-flash', models: GEMINI_MODELS },
 };
 
 const Modal = () => {
@@ -43,26 +41,26 @@ const Modal = () => {
   // FIX #1: Leer modelo inicial de localStorage correctamente
   const getStoredModel = () => {
     const raw = localStorage.getItem(config.storageKey);
-    return raw ? raw.replace(/["\\]/g, "") : config.defaultModel;
+    const storedModel = raw?.replace(/["\\]/g, "");
+    return config.models.some(({ value }) => value === storedModel)
+      ? storedModel
+      : config.defaultModel;
   };
 
   const [selectedModel, setSelectedModel] = useState(getStoredModel);
 
   // FIX #2: Resetear selectedModel cuando cambia el modelFeature
-  // Sin esto, al pasar de Claude a GPT el checkmark quedaba en el modelo
-  // de Claude hasta que el usuario hacía clic en algo.
   useEffect(() => {
     setSelectedModel(getStoredModel());
   }, [modelFeature]);
 
-  // FIX #3: Inicializar el modelo en localStorage si no existe
-  // ANTES: esto se hacía en el body del render (side-effect durante render)
-  // lo que podía causar re-renders infinitos. Ahora con useEffect es correcto.
+  // Replace retired or invalid saved choices with a supported default.
   useEffect(() => {
-    if (!localStorage.getItem(config.storageKey)) {
+    const storedModel = localStorage.getItem(config.storageKey)?.replace(/["\\]/g, "");
+    if (!config.models.some(({ value }) => value === storedModel)) {
       localStorage.setItem(config.storageKey, JSON.stringify(config.defaultModel));
     }
-  }, [config.storageKey, config.defaultModel]);
+  }, [config]);
 
   const saveModel = (value) => {
     localStorage.setItem(config.storageKey, JSON.stringify(value));

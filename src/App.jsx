@@ -13,11 +13,12 @@ import MainClaude from './components/MainClaude/MainClaude'
 
 function App() {
   let {modelFeature} = useContext(Context)
-  let userData = localStorage.getItem('user')
-  let userKey = localStorage.getItem('Gemini Key')
+  const userData = localStorage.getItem('User')
+  const hasApiKey = ['Gemini Key', 'GPT Key', 'Claude Key']
+    .some((key) => Boolean(localStorage.getItem(key)?.replace(/["\\]/g, '').trim()))
   
   
-  if (userData == undefined && userKey == undefined) {
+  if (!userData || !hasApiKey) {
     
     return(
       <>
