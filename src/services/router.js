@@ -1,19 +1,7 @@
-import { GeminiService } from "./geminiService";
-import { chatGPTService } from "./chatGPTService";
-import { claudeService } from "./claudeService";
+import { sendChatRequest } from './apiClient.js';
+import { PROVIDERS } from './chatState.js';
 
-export const AI_MODELS = {
-  Gemini: GeminiService,
-  GPT: chatGPTService,
-  Claude: claudeService
-};
-
-export const sendPrompt = async ({ model, prompt }) => {
-  const service = AI_MODELS[model];
-
-  if (!service) {
-    throw new Error(`Modelo no soportado: ${model}`);
-  }
-
-  return await service(prompt);
-};
+export function sendPrompt(request, options) {
+  if (!PROVIDERS.includes(request.provider)) throw new Error('Unsupported provider.');
+  return sendChatRequest(request, options);
+}

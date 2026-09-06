@@ -1,224 +1,160 @@
-import { useMemo, useState, useEffect } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { generatedImageDataUrl, legacyTokensToText } from "../../services/messageFormat";
 import "./renderMessage.css";
 
-/* ============================================================
-   USER MESSAGE — formateo básico para mensajes del usuario
-   Detecta `código inline` y saltos de línea
-============================================================ */
-export const UserMessage = ({ text }) => {
-  if (!text) return null;
+function CodeBlock({ content, language }) {
+  const [copyState, setCopyState] = useState("idle");
+  const timeoutRef = useRef(null);
+  const mountedRef = useRef(false);
 
-  // Dividir por saltos de línea preservando estructura
-  const lines = text.split("\n");
-
-  return (
-    <div className="user-msg-content">
-      {lines.map((line, i) => {
-        // Detectar `código inline`
-        const parts = line.split(/(`[^`]+`)/g);
-        return (
-          <span key={i} className="user-msg-line">
-            {parts.map((part, j) => {
-              if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
-                return (
-                  <code key={j} className="user-inline-code">
-                    {part.slice(1, -1)}
-                  </code>
-                );
-              }
-              return <span key={j}>{part}</span>;
-            })}
-            {i < lines.length - 1 && <br />}
-          </span>
-        );
-      })}
-    </div>
-  );
-};
-
-/* ============================================================
-   AI MESSAGE RENDERER
-============================================================ */
-const RenderMessage = ({ tokens }) => {
-  const normalized = useMemo(() => {
-    if (!Array.isArray(tokens)) return [];
-    const result = [];
-    let currentParagraph = [];
-    let currentList = [];
-
-    const flushParagraph = () => {
-      if (currentParagraph.length > 0) {
-        result.push({ type: "paragraph", content: [...currentParagraph] });
-        currentParagraph = [];
-      }
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      window.clearTimeout(timeoutRef.current);
     };
-
-    const flushList = () => {
-      if (currentList.length > 0) {
-        result.push({ type: "list", items: [...currentList] });
-        currentList = [];
-      }
-    };
-
-    tokens.forEach((t) => {
-      if (!t.content && t.type !== "image") return;
-
-      if (["text", "bold", "italic", "inlineCode"].includes(t.type)) {
-        flushList();
-        currentParagraph.push(t);
-      } else if (t.type === "listItem") {
-        flushParagraph();
-        currentList.push(t);
-      } else {
-        flushParagraph();
-        flushList();
-        result.push(t);
-      }
-    });
-
-    flushParagraph();
-    flushList();
-    return result;
-  }, [tokens]);
-
-  return (
-    <div className="rm-container">
-      {normalized.map((t, i) => {
-        switch (t.type) {
-          case "paragraph":
-            return (
-              <p key={i} className="rm-paragraph">
-                {t.content.map((child, j) => <TokenRenderer key={j} token={child} />)}
-              </p>
-            );
-
-          case "heading":
-            const Tag = `h${t.level || 3}`;
-            return (
-              <Tag key={i} className={`rm-heading rm-h${t.level || 3}`}>
-                {t.content}
-              </Tag>
-            );
-
-          case "list":
-            return (
-              <ul key={i} className="rm-list">
-                {t.items.map((item, j) => (
-                  <li key={j} className="rm-list-item">{item.content}</li>
-                ))}
-              </ul>
-            );
-
-          case "code":
-            return <CodeBlock key={i} content={t.content} language={t.language} />;
-
-          case "image":
-            return <ImageRenderer key={i} prompt={t.content} alt={t.alt} />;
-
-          default:
-            return null;
-        }
-      })}
-    </div>
-  );
-};
-
-/* ── Inline token renderer ── */
-const TokenRenderer = ({ token }) => {
-  switch (token.type) {
-    case "text":       return <span className="rm-text-span">{token.content}</span>;
-    case "bold":       return <strong className="rm-bold">{token.content}</strong>;
-    case "italic":     return <em className="rm-italic">{token.content}</em>;
-    case "inlineCode": return <code className="rm-inline-code">{token.content}</code>;
-    default:           return null;
-  }
-};
-
-/* ── CodeBlock con animación de entrada ── */
-const CodeBlock = ({ content, language }) => {
-  const [copied, setCopied] = useState(false);
+  }, []);
 
   const copy = async () => {
+    window.clearTimeout(timeoutRef.current);
+    setCopyState("copying");
+    let success = false;
     try {
-      await navigator.clipboard.writeText(content);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(content);
+        success = true;
+      }
     } catch {
-      const ta = document.createElement("textarea");
-      ta.value = content;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+      // Older browsers or denied clipboard permissions may still allow a
+      // user-initiated copy from a selected textarea.
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+
+    if (!mountedRef.current) return;
+    if (!success) {
+      const previousFocus = document.activeElement;
+      const field = document.createElement("textarea");
+      field.value = content;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      try {
+        success = document.execCommand("copy") === true;
+      } catch {
+        success = false;
+      } finally {
+        field.remove();
+        previousFocus?.focus?.({ preventScroll: true });
+      }
+    }
+
+    setCopyState(success ? "copied" : "failed");
+    timeoutRef.current = window.setTimeout(() => setCopyState("idle"), 2200);
   };
+
+  const copyLabel = {
+    idle: "Copy code",
+    copying: "Copying…",
+    copied: "Copied!",
+    failed: "Copy failed",
+  }[copyState];
 
   return (
     <div className="code-wrapper-gpt">
       <div className="code-header">
-        <div className="code-header-left">
-          <span className="code-dot red" />
-          <span className="code-dot yellow" />
-          <span className="code-dot green" />
-          <span className="code-lang">{language || "code"}</span>
-        </div>
-        <button className={`copy-btn-gpt ${copied ? "copied" : ""}`} onClick={copy}>
-          {copied ? "✓ Copied!" : "Copy"}
+        <span className="code-lang">{language || "text"}</span>
+        <button type="button" className={`copy-btn-gpt ${copyState}`}
+          onClick={copy} disabled={copyState === "copying"} aria-live="polite">
+          {copyLabel}
         </button>
       </div>
-      <pre className="code-block">
+      <pre className="code-block" tabIndex={0} aria-label={`${language || "Text"} code block`}>
         <code>{content}</code>
       </pre>
     </div>
   );
-};
+}
 
-/* ── Image renderer ── */
-const stringToSeed = (str) => {
-  let hash = 0;
-  if (!str) return 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
+function MarkdownPre({ node, children }) {
+  const codeNode = node?.children?.find((child) => child.tagName === "code");
+  if (!codeNode) return <pre className="code-block">{children}</pre>;
+  const content = codeNode.children.map((child) => child.value || "").join("");
+  const classes = codeNode.properties?.className || [];
+  const language = classes.find((value) => value.startsWith("language-"))?.slice(9);
+  return <CodeBlock content={content} language={language} />;
+}
+
+function MarkdownLink({ href, children, title }) {
+  if (!href || !/^(https?:\/\/|mailto:|#)/i.test(href)) {
+    return <span>{children}</span>;
   }
-  return Math.abs(hash) % 10_000_000;
+  return <a href={href} title={title} target={href.startsWith("#") ? undefined : "_blank"}
+    rel="noopener noreferrer">{children}</a>;
+}
+
+function OmittedImage({ alt }) {
+  // A model can return an arbitrary tracking URL in Markdown. Only native
+  // image bytes returned by our backend are ever loaded automatically.
+  return <span className="rm-image-omitted">[External image omitted{alt ? `: ${alt}` : ""}]</span>;
+}
+
+function MarkdownTable({ children }) {
+  return <div className="rm-table-scroll" tabIndex={0} role="region" aria-label="Table">
+    <table>{children}</table>
+  </div>;
+}
+
+const markdownComponents = {
+  pre: MarkdownPre,
+  a: MarkdownLink,
+  img: OmittedImage,
+  table: MarkdownTable,
 };
+const markdownPlugins = [remarkGfm];
 
-const ImageRenderer = ({ prompt, alt }) => {
-  const cleanPrompt = prompt?.trim() || "abstract art";
-  const seed = useMemo(() => stringToSeed(cleanPrompt), [cleanPrompt]);
-  const safePrompt = encodeURIComponent(cleanPrompt);
-  const [imgSrc, setImgSrc] = useState(null);
-  const [hasError, setHasError] = useState(false);
+const MessageMarkdown = memo(function MessageMarkdown({ text }) {
+  return <Markdown components={markdownComponents} remarkPlugins={markdownPlugins}>{text}</Markdown>;
+});
 
-  useEffect(() => {
-    setImgSrc(
-      `https://gen.pollinations.ai/image/${safePrompt}?width=1024&height=1024&nologo=true&model=flux&seed=${seed}`
-    );
-    setHasError(false);
-  }, [safePrompt, seed]);
+export const UserMessage = memo(function UserMessage({ text }) {
+  if (typeof text !== "string" || !text) return null;
+  return <div className="user-msg-content rm-markdown"><MessageMarkdown text={text} /></div>;
+});
 
-  const handleError = () => {
-    if (hasError) return;
-    setHasError(true);
-    setImgSrc(
-      `https://gen.pollinations.ai/image/${safePrompt}?width=1024&height=1024&nologo=true&model=turbo&seed=${seed}`
-    );
-  };
+const NativeImage = memo(function NativeImage({ image, index }) {
+  const source = useMemo(() => generatedImageDataUrl(image), [image]);
+  const [failedSource, setFailedSource] = useState(null);
+  if (!source || source === failedSource) {
+    return <p className="rm-image-error" role="status">This generated image could not be displayed.</p>;
+  }
 
-  if (!imgSrc) return null;
-
+  const extension = image.mime_type === "image/jpeg" ? "jpg" : image.mime_type.split("/")[1];
+  const alt = typeof image.alt === "string" && image.alt.trim() ? image.alt : `Generated image ${index + 1}`;
   return (
-    <div className="rm-image-container">
-      <figure className="rm-image-figure">
-        <img src={imgSrc} alt={alt || "Generating..."} className="rm-image"
-          loading="lazy" onError={handleError} />
-        <figcaption className="rm-image-caption">
-          {cleanPrompt}{hasError ? " (Turbo mode)" : ""}
-        </figcaption>
-      </figure>
+    <figure className="rm-image-figure">
+      <img src={source} alt={alt} className="rm-image" loading="lazy" decoding="async"
+        onError={() => setFailedSource(source)} />
+      <figcaption className="rm-image-caption">
+        <span>{alt}</span>
+        <a href={source} download={`iapp-image-${index + 1}.${extension}`}>Download image</a>
+      </figcaption>
+    </figure>
+  );
+});
+
+const RenderMessage = memo(function RenderMessage({ text, tokens, images }) {
+  const markdown = useMemo(() => typeof text === "string" ? text : legacyTokensToText(tokens), [text, tokens]);
+  return (
+    <div className="rm-container rm-markdown">
+      {markdown && <MessageMarkdown text={markdown} />}
+      {Array.isArray(images) && images.length > 0 && <div className="rm-image-container">
+        {images.map((image, index) => <NativeImage key={index} image={image} index={index} />)}
+      </div>}
     </div>
   );
-};
+});
 
 export default RenderMessage;

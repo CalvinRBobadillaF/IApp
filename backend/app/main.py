@@ -1,103 +1,91 @@
+import asyncio
+import logging
 import os
-from collections.abc import Mapping
-from typing import Literal
+import uuid
 
-from anthropic import AsyncAnthropic
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from google import genai
-from openai import AsyncOpenAI
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse
 
-
-Provider = Literal["Gemini", "GPT", "Claude"]
+from .catalog import CATALOG, MODELS
+from .providers import TIMEOUT_SECONDS, ask_claude, ask_gemini, ask_openai, create_image, provider_error
+from .schemas import MAX_BODY_BYTES, ChatRequest, ChatResponse
 
 load_dotenv()
-
-MODELS: Mapping[str, set[str]] = {
-    "Gemini": {
-        "gemini-3.8-flash",
-        "gemini-3.7-flash",
-        "gemini-3.5-flash",
-        "gemini-3.5-flash-lite",
-        "gemini-3.1-pro-preview",
-    },
-    "GPT": {"gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"},
-    "Claude": {"claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5-20251001"},
-}
-
-
-class ChatRequest(BaseModel):
-    provider: Provider
-    model: str
-    prompt: str = Field(min_length=1, max_length=100_000)
-
-
-class ChatResponse(BaseModel):
-    text: str
+logger = logging.getLogger("iapp.api")
 
 
 def configured_origins() -> list[str]:
-    return [
-        origin.strip()
-        for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
-        if origin.strip()
-    ]
+    return [origin.strip().rstrip("/") for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if origin.strip()]
 
 
-app = FastAPI(title="IApp API", version="1.0.0")
+class RequestLimitsMiddleware:
+    """Reject oversized bodies before JSON parsing, including chunked requests."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def no_cache_send(message):
+            if message["type"] == "http.response.start":
+                message["headers"] = [*message.get("headers", []), (b"cache-control", b"no-store")]
+            await send(message)
+
+        if scope["method"] != "POST":
+            return await self.app(scope, receive, no_cache_send)
+        headers = dict(scope.get("headers", []))
+        declared = headers.get(b"content-length", b"")
+        if declared:
+            try:
+                if int(declared) > MAX_BODY_BYTES:
+                    return await JSONResponse(status_code=413, content={"detail": "Request exceeds 18 MiB. Remove attachments or start a new chat."})(scope, receive, no_cache_send)
+            except ValueError:
+                return await JSONResponse(status_code=400, content={"detail": "Invalid Content-Length."})(scope, receive, no_cache_send)
+        chunks, size = [], 0
+        while True:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                return
+            chunk = message.get("body", b"")
+            size += len(chunk)
+            if size > MAX_BODY_BYTES:
+                return await JSONResponse(status_code=413, content={"detail": "Request exceeds 18 MiB. Remove attachments or start a new chat."})(scope, receive, no_cache_send)
+            chunks.append(chunk)
+            if not message.get("more_body", False):
+                break
+        body = b"".join(chunks)
+        delivered = False
+
+        async def replay():
+            nonlocal delivered
+            if not delivered:
+                delivered = True
+                return {"type": "http.request", "body": body, "more_body": False}
+            return await receive()
+
+        await self.app(scope, replay, no_cache_send)
+
+
+app = FastAPI(title="IApp API", version="2.0.0")
+app.add_middleware(RequestLimitsMiddleware)
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=configured_origins(),
-    allow_credentials=False,
-    allow_methods=["POST", "GET"],
-    allow_headers=["Content-Type"],
+    CORSMiddleware, allow_origins=configured_origins(), allow_credentials=False,
+    allow_methods=["POST", "GET"], allow_headers=["Content-Type"], expose_headers=["X-Request-ID"],
 )
+# Per-worker concurrency protection; this does not provide user authentication.
+request_slots = asyncio.Semaphore(4)
 
 
-def require_key(name: str) -> str:
-    key = os.getenv(name)
-    if not key:
-        raise HTTPException(status_code=503, detail=f"{name} is not configured on the server.")
-    return key
-
-
-def provider_error(error: Exception) -> HTTPException:
-    status_code = getattr(error, "status_code", None) or getattr(error, "status", None)
-    if status_code in (401, 403):
-        return HTTPException(status_code=502, detail="The provider rejected the server API key.")
-    if status_code == 429:
-        return HTTPException(status_code=429, detail="The provider rate limit or quota was reached.")
-    return HTTPException(status_code=502, detail="The AI provider could not complete the request.")
-
-
-async def ask_openai(prompt: str, model: str) -> str:
-    client = AsyncOpenAI(api_key=require_key("OPENAI_API_KEY"))
-    response = await client.responses.create(
-        model=model,
-        input=prompt,
-        instructions="You are a helpful and creative assistant integrated in IApp.",
-        store=False,
-    )
-    return response.output_text or "OpenAI did not return text."
-
-
-async def ask_claude(prompt: str, model: str) -> str:
-    client = AsyncAnthropic(api_key=require_key("ANTHROPIC_API_KEY"))
-    response = await client.messages.create(
-        model=model,
-        max_tokens=8096,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    text = "".join(block.text for block in response.content if block.type == "text")
-    return text or "Claude did not return text."
-
-
-async def ask_gemini(prompt: str, model: str) -> str:
-    client = genai.Client(api_key=require_key("GEMINI_API_KEY"))
-    response = await client.aio.models.generate_content(model=model, contents=prompt)
-    return response.text or "Gemini did not return text."
+@app.exception_handler(RequestValidationError)
+async def validation_error(_request: Request, error: RequestValidationError):
+    # Default validation responses include rejected input, potentially a private file.
+    messages = [item["msg"].removeprefix("Value error, ") for item in error.errors()[:3]]
+    return JSONResponse(status_code=422, content={"detail": " ".join(messages)})
 
 
 @app.get("/api/v1/health")
@@ -105,21 +93,32 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/api/v1/models")
+async def models() -> dict:
+    return CATALOG
+
+
 @app.post("/api/v1/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     if request.model not in MODELS[request.provider]:
-        raise HTTPException(status_code=400, detail="Unsupported model for the selected provider.")
-
+        raise HTTPException(status_code=400, detail="Unsupported model for the selected provider. Refresh the model list and select another model.")
+    request_id = uuid.uuid4().hex[:12]
     try:
-        if request.provider == "GPT":
-            text = await ask_openai(request.prompt, request.model)
-        elif request.provider == "Claude":
-            text = await ask_claude(request.prompt, request.model)
-        else:
-            text = await ask_gemini(request.prompt, request.model)
+        await asyncio.wait_for(request_slots.acquire(), timeout=0.1)
+    except TimeoutError:
+        raise HTTPException(status_code=429, detail="The server is busy. Please try again shortly.") from None
+    try:
+        async with asyncio.timeout(TIMEOUT_SECONDS + 5):
+            if request.mode == "image":
+                return await create_image(request)
+            adapter = {"GPT": ask_openai, "Claude": ask_claude, "Gemini": ask_gemini}[request.provider]
+            return await adapter(request)
     except HTTPException:
         raise
     except Exception as error:
-        raise provider_error(error) from error
-
-    return ChatResponse(text=text)
+        logger.warning("Provider failure request=%s provider=%s model=%s error_type=%s", request_id, request.provider, request.model, type(error).__name__)
+        mapped = provider_error(error)
+        mapped.headers = {"X-Request-ID": request_id}
+        raise mapped from None
+    finally:
+        request_slots.release()
