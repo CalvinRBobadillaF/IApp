@@ -18,17 +18,10 @@ const loadState = (key, defaultValue) => {
 
 const getInitialModelFeature = () => {
   const preferred = localStorage.getItem("ModelFeature");
-  const keyForModel = {
-    Gemini: "Gemini Key",
-    GPT: "GPT Key",
-    Claude: "Claude Key",
-  };
-
-  if (keyForModel[preferred] && localStorage.getItem(keyForModel[preferred])) {
+  if (["Gemini", "GPT", "Claude"].includes(preferred)) {
     return preferred;
   }
-
-  return Object.keys(keyForModel).find((model) => localStorage.getItem(keyForModel[model])) || "Gemini";
+  return "Gemini";
 };
 
 const ContextProvider = ({ children }) => {
@@ -42,11 +35,6 @@ const ContextProvider = ({ children }) => {
   const [theme, setTheme] = useState(false);
   const [models, setModels] = useState(false);
   
-  // Keys de API
-  const [geminiKey, setGeminiKey] = useState("");
-  const [GPTKey, setGPTKey] = useState("");
-  const [claudeKey, setClaudeKey] = useState("");
-
   const [modelFeature, setModelFeature] = useState(getInitialModelFeature);
   const [currentChatId, setCurrentChatId] = useState(() => loadState("currentChatId", null));
   const [chatsByModel, setChatsByModel] = useState(() => 
@@ -176,9 +164,6 @@ const ContextProvider = ({ children }) => {
      GESTIÓN DE ALMACENAMIENTO
      ============================================================ */
   const resetStorage = () => {
-        localStorage.removeItem('Gemini Key')
-        localStorage.removeItem('GPT Key')
-        localStorage.removeItem('Claude Key')
         localStorage.removeItem('User')
         localStorage.removeItem('Model')
         localStorage.removeItem('ModelGPT')
@@ -224,12 +209,6 @@ const ContextProvider = ({ children }) => {
     setTheme,
     models,
     setModels,
-    geminiKey,
-    setGeminiKey,
-    GPTKey,
-    setGPTKey,
-    claudeKey,
-    setClaudeKey,
     modalModel,
     setModalModels,
     modelFeature,
