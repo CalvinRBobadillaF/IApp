@@ -110,6 +110,7 @@ export default function ContextProvider({ children }) {
   const newChat = useCallback(() => {
     cancelRequest();
     resetDraft();
+    changeMode('chat');
     const id = crypto.randomUUID();
     dispatch({ type: 'new', provider: modelFeature, chat: { id, private: privacyMode, messages: [] } });
     setCurrentChatId(id);
@@ -157,6 +158,7 @@ export default function ContextProvider({ children }) {
     if (!chats.some(chat => chat.id === id)) return;
     cancelRequest();
     resetDraft();
+    changeMode('chat');
     setCurrentChatId(id);
   };
   const deleteChat = id => {

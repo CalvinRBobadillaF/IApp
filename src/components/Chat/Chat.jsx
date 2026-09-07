@@ -12,6 +12,7 @@ const PROVIDERS = {
   GPT: { name: "ChatGPT", icon: assets.chatgpt_icon },
   Claude: { name: "Claude", icon: assets.claude_icon },
 };
+const EMPTY_MESSAGES = [];
 const SUGGESTIONS = [
   { icon: "file", title: "Understand a document", detail: "Attach a file and find what matters.", prompt: "Review the attached file. Summarize the key points and highlight anything I should double-check." },
   { icon: "code", title: "Work through some code", detail: "Explain, debug, or build something.", prompt: "Help me review this code for bugs and explain how to improve it:\n\n```\n\n```" },
@@ -66,17 +67,19 @@ export default function Chat({ provider }) {
     ? userPrompt.trim().length > 0 && attachments.length === 0
     : userPrompt.trim().length > 0 || attachments.length > 0);
   const canAttach = !loading && !attachmentsLoading && !isImageMode;
-  const messages = currentChat?.messages || [];
+  const messages = currentChat?.messages || EMPTY_MESSAGES;
+  const hasMessages = messages.length > 0;
 
   useEffect(() => {
     followScroll.current = true;
     const viewport = scrollRef.current;
-    if (viewport) viewport.scrollTop = viewport.scrollHeight;
-  }, [currentChatId]);
+    if (viewport) viewport.scrollTop = hasMessages ? viewport.scrollHeight : 0;
+  }, [currentChatId, hasMessages]);
 
   useEffect(() => {
     const viewport = scrollRef.current;
-    if (viewport && (followScroll.current || messages.at(-1)?.role === "user")) {
+    if (viewport && !messages.length) viewport.scrollTop = 0;
+    else if (viewport && (followScroll.current || messages.at(-1)?.role === "user")) {
       viewport.scrollTop = viewport.scrollHeight;
     }
   }, [messages, loading]);

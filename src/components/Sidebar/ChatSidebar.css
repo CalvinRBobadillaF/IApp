@@ -1,0 +1,28 @@
+@import '../Chat/theme.css';
+
+.iapp-sidebar { width: 82px; flex: 0 0 82px; height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; gap: 16px; padding: 24px 15px; background: var(--sidebar-bg); color: #cdd4df; overflow: hidden; }
+.iapp-sidebar.is-open { width: 264px; flex-basis: 264px; }
+.iapp-sidebar button { display: flex; align-items: center; gap: 10px; padding: 10px; min-height: 42px; background: transparent; border: 1px solid transparent; border-radius: 10px; color: inherit; cursor: pointer; font: inherit; text-align: left; }
+.iapp-sidebar button:hover { background: var(--chat-accent-soft); color: var(--chat-accent); }
+.iapp-sidebar button:focus-visible { outline: 2px solid var(--chat-accent); outline-offset: -2px; }
+.iapp-sidebar svg { flex-shrink: 0; }
+.iapp-sidebar .sidebar-menu { width: 48px; justify-content: center; }
+.sidebar-menu svg { width: 30px; height: 30px; }
+.iapp-sidebar .sidebar-new { margin-top: 8px; border-radius: 28px; background: var(--chat-bg); border-color: var(--chat-border); padding: 13px 15px; font-size: 13px; flex-shrink: 0; }
+.sidebar-history { min-height: 0; flex: 1; display: flex; flex-direction: column; }
+.sidebar-history h2 { color: var(--chat-muted); font-size: 10px; text-transform: uppercase; font-weight: 500; letter-spacing: .08em; margin: 4px 10px 12px; }
+.sidebar-history ul { list-style: none; overflow-y: auto; overscroll-behavior: contain; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--chat-border) transparent; }
+.sidebar-history li { display: flex; align-items: center; border-radius: 10px; margin-bottom: 4px; }
+.sidebar-history li.is-current { background: var(--chat-accent-soft); color: var(--chat-accent); }
+.sidebar-history .sidebar-chat { flex: 1; min-width: 0; font-size: 12px; padding: 9px; }
+.sidebar-chat span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-history .sidebar-delete { flex: 0 0 32px; justify-content: center; padding: 4px; opacity: .55; }
+.sidebar-delete svg { width: 16px; }
+.sidebar-history li:hover .sidebar-delete, .sidebar-delete:focus-visible { opacity: 1; }
+.sidebar-empty { margin: 0 10px; color: var(--chat-muted); font-size: 12px; }
+.sidebar-bottom { margin-top: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
+.sidebar-bottom button { width: 100%; font-size: 13px; }
+@media (max-width: 600px) {
+  .iapp-sidebar { position: fixed; top: 0; left: 0; z-index: 90; width: min(80vw, 300px); visibility: hidden; transform: translateX(-100%); box-shadow: 10px 0 50px #0008; }
+  .iapp-sidebar.is-open { width: min(80vw, 300px); visibility: visible; transform: translateX(0); }
+}

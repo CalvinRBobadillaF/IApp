@@ -1,0 +1,28 @@
+/* One provider palette shared by chat, navigation, settings, and message content. */
+.iapp-chat, .iapp-sidebar {
+  --chat-accent: #38bdf8;
+  --chat-accent-soft: #11283a;
+  --chat-bg: #0d0d0f;
+  --chat-panel: #141b27;
+  --chat-border: #293342;
+  --chat-muted: #a1adbf;
+  --sidebar-bg: #080c14;
+}
+.iapp-chat-gpt, .iapp-sidebar-gpt {
+  --chat-accent: #b597fa;
+  --chat-accent-soft: #2b1e40;
+  --chat-bg: #120d1b;
+  --chat-panel: #1c1529;
+  --chat-border: #3b2c50;
+  --chat-muted: #b8afc9;
+  --sidebar-bg: #0b0613;
+}
+.iapp-chat-claude, .iapp-sidebar-claude {
+  --chat-accent: #f3bd65;
+  --chat-accent-soft: #382819;
+  --chat-bg: #19130e;
+  --chat-panel: #271e15;
+  --chat-border: #493725;
+  --chat-muted: #c4b39c;
+  --sidebar-bg: #130d08;
+}
