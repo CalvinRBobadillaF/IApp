@@ -88,7 +88,7 @@ export function buildHistory(messages, { privacyMode, attachments = [], mode = '
   for (let i = 0; i < messages.length - 1; i++) {
     const user = messages[i];
     const answer = messages[i + 1];
-    if (user.role === 'user' && user.status === 'complete' && answer.role === 'assistant') {
+    if (user.role === 'user' && user.status === 'complete' && answer.role === 'assistant' && answer.status === 'complete') {
       pairs.push([user, answer]);
       i++;
     }
@@ -97,9 +97,20 @@ export function buildHistory(messages, { privacyMode, attachments = [], mode = '
   let chars = 0;
   let truncated = false;
   let missingFiles = false;
+  let missingImages = false;
   const history = [];
   for (const pair of pairs.reverse()) {
-    const extraChars = pair.reduce((sum, m) => sum + m.text.length, 0);
+    const normalized = pair.map(m => {
+      const lost = (m.attachments || []).filter(f => !f.data || mode === 'image');
+      if (lost.length) missingFiles = true;
+      const suffix = lost.length ? `\n[Attachments not included in this request: ${lost.map(f => f.name).join(', ')}. Ask the user to reattach if needed.]` : '';
+      const generatedImage = Boolean(m.images?.length || m.imagesOmitted);
+      if (generatedImage) missingImages = true;
+      const imageNote = generatedImage ? '\n[An image was generated in this turn. The image itself is not included in the conversation context.]' : '';
+      return { role: m.role, text: m.text + suffix + imageNote,
+        attachments: mode === 'image' ? [] : (m.attachments || []).filter(f => f.data).map(attachmentPayload) };
+    });
+    const extraChars = normalized.reduce((sum, m) => sum + m.text.length, 0);
     const files = pair.flatMap(m => m.attachments || []).filter(f => f.data);
     const extraBytes = mode === 'image' ? 0 : files.reduce((sum, f) => sum + (f.size || Math.ceil(f.data.length * 3 / 4)), 0);
     if (history.length + 2 > 40 || chars + extraChars > MAX_HISTORY_CHARS || bytes + extraBytes > MAX_TOTAL_BYTES) {
@@ -108,15 +119,9 @@ export function buildHistory(messages, { privacyMode, attachments = [], mode = '
     }
     chars += extraChars;
     bytes += extraBytes;
-    const normalized = pair.map(m => {
-      const lost = (m.attachments || []).filter(f => !f.data || mode === 'image');
-      if (lost.length) missingFiles = true;
-      const suffix = lost.length ? `\n[Attachments not included in this request: ${lost.map(f => f.name).join(', ')}. Ask the user to reattach if needed.]` : '';
-      return { role: m.role, text: m.text + suffix,
-        attachments: mode === 'image' ? [] : (m.attachments || []).filter(f => f.data).map(attachmentPayload) };
-    });
     history.unshift(...normalized);
   }
   return { history, notice: [truncated && 'Older turns were omitted to stay within the context limit.',
-    missingFiles && 'Some earlier files are unavailable. Reattach them for analysis.'].filter(Boolean).join(' ') };
+    missingFiles && 'Some earlier files are unavailable. Reattach them for analysis.',
+    missingImages && 'Generated images are not included in context. Download and attach them in Chat to analyze them.'].filter(Boolean).join(' ') };
 }

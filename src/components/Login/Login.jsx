@@ -1,11 +1,10 @@
 import { useContext, useState } from 'react'
 import './Login.css'
-import { Context } from '../../Context/Context'
+import { Context } from '../../Context/context.js'
 
 const Login = () => {
-    const { userName, setUserName } = useContext(Context);
+    const { userName, setUserName, completeLogin } = useContext(Context);
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
 
     const setData = () => {
         // Validación mínima
@@ -14,15 +13,11 @@ const Login = () => {
             return;
         }
         setError("");
-        setLoading(true);
-
-        localStorage.setItem('User', JSON.stringify(userName.trim()));
-        // Pequeño delay para que el usuario vea el feedback
-        setTimeout(() => window.location.reload(), 300);
+        completeLogin(userName);
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === "Enter") setData();
+        if (e.key === "Enter" && !e.nativeEvent.isComposing) setData();
     };
 
     return (
@@ -34,9 +29,12 @@ const Login = () => {
 
             <div className="login-box">
                 <div className="input-group">
-                    <label className="input-label">Name</label>
+                    <label className="input-label" htmlFor="display-name">Name</label>
                     <input
+                        id="display-name"
                         type="text"
+                        value={userName}
+                        maxLength={100}
                         placeholder="Your name..."
                         onChange={(e) => setUserName(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -47,14 +45,13 @@ const Login = () => {
             </div>
 
             <button
-                className={`login-btn ${loading ? "loading" : ""}`}
+                className="login-btn"
                 onClick={setData}
-                disabled={loading}
             >
-                {loading ? "Entering..." : "Get Started →"}
+                Get Started →
             </button>
 
-            <p className="login-note">Your API credentials are securely managed by the IApp server.</p>
+            <p className="login-note">Choose a display name for this device. Provider credentials are configured on the IApp server.</p>
         </div>
     );
 };

@@ -1,5 +1,6 @@
 import { memo, useContext, useEffect, useRef, useState } from "react";
-import { Context } from "../../Context/Context";
+import { Context } from "../../Context/context.js";
+import { ACCEPTED_FILE_TYPES } from "../../services/attachments.js";
 import { assets } from "../../assets/assets";
 import Modal from "../Modal/Modal";
 import RenderMessage, { UserMessage } from "../RenderMessage/RenderMessage";
@@ -11,20 +12,11 @@ const PROVIDERS = {
   GPT: { name: "ChatGPT", icon: assets.chatgpt_icon },
   Claude: { name: "Claude", icon: assets.claude_icon },
 };
-const ACCEPTED_FILES = ".pdf,.png,.jpg,.jpeg,.webp,.txt,.md,.csv,.json,.html,.htm,.css,.js,.jsx,.ts,.tsx,.py,.xml,.yaml,.yml,.sql,.sh,.log,.c,.cpp,.h,.java,.go,.rs,.rb";
 const SUGGESTIONS = [
   { icon: "file", title: "Understand a document", detail: "Attach a file and find what matters.", prompt: "Review the attached file. Summarize the key points and highlight anything I should double-check." },
   { icon: "code", title: "Work through some code", detail: "Explain, debug, or build something.", prompt: "Help me review this code for bugs and explain how to improve it:\n\n```\n\n```" },
   { icon: "chat", title: "Think it through", detail: "Turn an idea into a practical plan.", prompt: "Help me turn my idea into a practical plan. Start by asking me what I want to achieve." },
 ];
-
-function displayName() {
-  try {
-    const stored = localStorage.getItem("User");
-    if (!stored) return "there";
-    try { return String(JSON.parse(stored)); } catch { return stored; }
-  } catch { return "there"; }
-}
 
 function fileSize(size) {
   if (!size) return "";
@@ -37,13 +29,15 @@ const ChatMessage = memo(function ChatMessage({ message, provider }) {
     <article className={`chat-message ${isUser ? "chat-message-user" : "chat-message-assistant"}`}>
       <img className="chat-avatar" src={isUser ? assets.user_icon : PROVIDERS[provider].icon} alt="" />
       <div className="chat-message-body">
-        <div className="chat-message-author">{isUser ? "You" : PROVIDERS[provider].name}{message.mode === "image" && <span>Image creation</span>}</div>
+        <div className="chat-message-author">{isUser ? "You" : PROVIDERS[provider].name}{message.images?.length > 0 && <span>Image creation</span>}</div>
         {isUser ? <UserMessage text={message.text || ""} /> : <RenderMessage text={message.text} tokens={message.tokens} images={message.images} />}
         {isUser && message.attachments?.length > 0 && (
           <ul className="chat-files chat-sent-files" aria-label="Attached files">
-            {message.attachments.map((file, index) => <li className="chat-file" key={file.id || `${file.name}-${index}`}><Icon name="file" /><span title={file.name}>{file.name}</span></li>)}
+            {message.attachments.map((file, index) => <li className="chat-file" key={file.id || `${file.name}-${index}`}><Icon name="file" /><span title={file.name}>{file.name}{!file.data && <small>Reattach to analyze again</small>}</span></li>)}
           </ul>
         )}
+        {message.imagesOmitted && !message.images?.length && <p className="chat-message-status">Generated images were not saved to browser storage. Create a new image to view or download it.</p>}
+        {isUser && ["failed", "cancelled"].includes(message.status) && <p className="chat-message-status">{message.status === "failed" ? "Request failed" : "Request stopped"} · This message is not included in later conversation context.</p>}
       </div>
     </article>
   );
@@ -55,9 +49,8 @@ export default function Chat({ provider }) {
     error, dismissError, attachments = [], addAttachments, removeAttachment, attachmentError,
     attachmentsLoading, mode = "chat", setMode, setModelFeature, selectedModels = {},
     modelCatalog = {}, privacyMode, openModal, setOpenModal, openSidebar, setOpenSidebar,
-    storageWarning, contextNotice, saveHistory,
+    storageWarning, contextNotice, saveHistory, userName,
   } = useContext(Context);
-  const [user] = useState(displayName);
   const [dragging, setDragging] = useState(false);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -69,7 +62,9 @@ export default function Chat({ provider }) {
   const modelLabel = catalog?.models?.find((model) => model.value === selectedModel)?.label || selectedModel || "Loading models…";
   const canCreateImages = provider !== "Claude" && Boolean(catalog?.image_model);
   const isImageMode = mode === "image";
-  const canSend = !loading && !attachmentsLoading && (userPrompt.trim().length > 0 || (!isImageMode && attachments.length > 0));
+  const canSend = !loading && !attachmentsLoading && (isImageMode
+    ? userPrompt.trim().length > 0 && attachments.length === 0
+    : userPrompt.trim().length > 0 || attachments.length > 0);
   const canAttach = !loading && !attachmentsLoading && !isImageMode;
   const messages = currentChat?.messages || [];
 
@@ -139,14 +134,14 @@ export default function Chat({ provider }) {
           {messages.length === 0 ? (
             <section className="chat-welcome">
               <div className="chat-eyebrow">YOUR AI WORKSPACE</div>
-              <h1>Hello, <span>{user}.</span><br />What are we working on?</h1>
+              <h1>Hello, <span>{userName || "there"}.</span><br />What are we working on?</h1>
               <p>Bring a question, a document, or an idea. Let’s make sense of it together.</p>
               <div className="chat-suggestions">
                 {SUGGESTIONS.map((suggestion) => <button key={suggestion.title} type="button" disabled={loading} onClick={() => chooseSuggestion(suggestion.prompt)}><Icon name={suggestion.icon} /><strong>{suggestion.title}</strong><span>{suggestion.detail}</span><Icon name="arrow" className="chat-suggestion-arrow" /></button>)}
               </div>
               {privacyMode && <div className="chat-private-intro"><Icon name="lock" /><p>Private session: each request stands alone. Messages stay in memory for this session and are not saved to this browser. Your provider still processes the request.</p></div>}
             </section>
-          ) : <div className="chat-transcript" aria-label="Conversation">
+          ) : <div className="chat-transcript" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation">
             {messages.map((message, index) => <ChatMessage key={message.id || `${currentChatId}-${index}`} message={message} provider={provider} />)}
             {loading && <div className="chat-thinking" role="status"><span className="chat-thinking-dot" />{isImageMode ? "Creating your image…" : "Working on your request…"}<span>You can stop this request below.</span></div>}
           </div>}
@@ -163,14 +158,14 @@ export default function Chat({ provider }) {
             <button type="button" className={isImageMode ? "active" : ""} aria-pressed={isImageMode} disabled={!canCreateImages || loading || attachmentsLoading} title={canCreateImages ? "Generate a new image from a text description" : "Image generation is available with supported Gemini and GPT models"} onClick={() => setMode("image")}><Icon name="image" />Create image</button>
             {provider === "Claude" && <span className="chat-mode-hint">Claude can analyze images; use GPT or Gemini to create them.</span>}
           </div>
-          {isImageMode && <p className="chat-composer-note">Describe a new image to create. Attachments and image editing are not supported in this mode.</p>}
+          {isImageMode && <p className="chat-composer-note">{attachments.length ? "Remove your attachments or switch to Chat to analyze them. " : ""}Describe a new image to create. Attachments and image editing are not supported in this mode.</p>}
           {attachments.length > 0 && <ul className="chat-files" aria-label="Files ready to send">{attachments.map((file) => <li key={file.id} className="chat-file"><Icon name="file" /><span title={file.name}>{file.name}<small>{fileSize(file.size)}</small></span><button type="button" onClick={() => removeAttachment(file.id)} disabled={loading || attachmentsLoading} aria-label={`Remove ${file.name}`}><Icon name="close" /></button></li>)}</ul>}
           {attachmentError && <p className="chat-attachment-error" role="alert">{attachmentError}</p>}
           <label htmlFor="chat-prompt" className="chat-sr-only">{isImageMode ? "Describe the image to create" : `Message ${config.name}`}</label>
-          <textarea id="chat-prompt" ref={inputRef} rows={2} value={userPrompt} maxLength={60000} placeholder={isImageMode ? "Describe the image you want to create…" : `Message ${config.name}, or drop a file here…`} onChange={(event) => setUserPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) submit(event); }} />
+          <textarea id="chat-prompt" ref={inputRef} rows={2} value={userPrompt} maxLength={100000} disabled={loading} placeholder={isImageMode ? "Describe the image you want to create…" : `Message ${config.name}, or drop a file here…`} onChange={(event) => setUserPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) submit(event); }} />
           <div className="chat-composer-actions">
             <div className="chat-attachment-control">
-              <input type="file" multiple accept={ACCEPTED_FILES} ref={fileRef} className="chat-file-input" disabled={!canAttach} onChange={(event) => { if (event.target.files?.length) addAttachments(event.target.files); event.target.value = ""; }} />
+              <input type="file" multiple accept={ACCEPTED_FILE_TYPES} ref={fileRef} className="chat-file-input" disabled={!canAttach} onChange={(event) => { if (event.target.files?.length) addAttachments(event.target.files); event.target.value = ""; }} />
               <button type="button" className="chat-icon-button" disabled={!canAttach} onClick={() => fileRef.current?.click()} aria-label="Attach files" title="Attach PDF, image, text, CSV, or code files"><Icon name="attach" /></button>
               <span className="chat-file-help">{attachmentsLoading ? "Reading files…" : isImageMode ? "Text to image" : "PDF, images & text · 4 files · 5 MB each / 12 MB total"}</span>
             </div>

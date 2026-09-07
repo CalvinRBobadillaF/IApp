@@ -3,7 +3,7 @@ import { useContext } from 'react'
 import './App.css'
 import Main from './components/Main/Main'
 import Sidebar from './components/Sidebar/Sidebar'
-import { Context } from './Context/Context'
+import { Context } from './Context/context.js'
 import Login from './components/Login/Login'
 import MainGPT from './components/MainGPT/MainGPT'
 import SidebarGPT from './components/SidebarGPT/SidebarGPT'
@@ -12,11 +12,10 @@ import MainClaude from './components/MainClaude/MainClaude'
 
 
 function App() {
-  let {modelFeature} = useContext(Context)
-  const userData = localStorage.getItem('User')
+  const {modelFeature, signedIn} = useContext(Context)
   
   
-  if (!userData) {
+  if (!signedIn) {
     
     return(
       <>

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useId, useRef } from "react";
-import { Context } from "../../Context/Context";
+import { Context } from "../../Context/context.js";
 import Icon from "../Chat/Icon";
 import "./Modal.css";
 
@@ -23,6 +23,8 @@ export default function Modal() {
 
   useEffect(() => {
     const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -46,6 +48,7 @@ export default function Modal() {
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };
   }, [setOpenModal]);
@@ -82,7 +85,7 @@ export default function Modal() {
 
         <section className="settings-section">
           <div className="settings-toggle-row">
-            <div><label htmlFor={historyId} className="settings-label">Save chat history on this device</label><p className="settings-help">Turning this off removes saved chats from this browser. They remain available in memory until you reload.</p></div>
+            <div><label htmlFor={historyId} className="settings-label">Save chat history on this device</label><p className="settings-help">{privacyMode ? "Private chats are never saved. Your history preference for regular chats is preserved." : "Turning this off removes saved chats from this browser. They remain available in memory until you reload."}</p></div>
             <input id={historyId} className="settings-switch" type="checkbox" role="switch" checked={!privacyMode && Boolean(saveHistory)} disabled={busy || privacyMode} onChange={(event) => setSaveHistory(event.target.checked)} />
           </div>
           <p className="settings-help">Attachments and generated images are not saved to browser storage. Download any generated images you want to keep.</p>
@@ -90,7 +93,7 @@ export default function Modal() {
 
         <section className="settings-section">
           <label htmlFor={instructionsId} className="settings-label">Custom instructions</label>
-          <p className="settings-help" id={`${instructionsId}-help`}>Share useful background, a preferred language, or how you like answers. These instructions are saved on this device and excluded in privacy mode.</p>
+          <p className="settings-help" id={`${instructionsId}-help`}>Share useful background, a preferred language, or how you like answers. These instructions stay in memory until you reload and are excluded in privacy mode.</p>
           <textarea id={instructionsId} aria-describedby={`${instructionsId}-help`} rows={4} maxLength={4000} value={instructions} disabled={busy || privacyMode} onChange={(event) => setInstructions(event.target.value)} placeholder="For example: Explain in Spanish, be concise, and include practical examples." />
           <p className="settings-character-count">{instructions.length.toLocaleString()} / 4,000</p>
         </section>

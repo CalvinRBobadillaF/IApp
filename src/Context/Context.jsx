@@ -7,9 +7,6 @@ import { attachmentPayload, buildHistory, chatsReducer, emptyChats, initialSetti
   PROVIDERS, readStored, serializableChats, STORAGE_KEYS } from '../services/chatState.js';
 import { MAX_FILES, MAX_TOTAL_BYTES, readAttachment, validateFile } from '../services/attachments.js';
 
-// Keep the existing Context import path working for the provider-specific views.
-export { Context } from './context.js';
-
 export default function ContextProvider({ children }) {
   const [settings, setSettings] = useState(initialSettings);
   const { privacyMode, saveHistory } = settings;
@@ -27,7 +24,10 @@ export default function ContextProvider({ children }) {
     const value = readStored('User', '');
     return typeof value === 'string' ? value : '';
   });
-  const [signedIn, setSignedIn] = useState(() => Boolean(readStored('User', '')));
+  const [signedIn, setSignedIn] = useState(() => {
+    const value = readStored('User', '');
+    return typeof value === 'string' && Boolean(value.trim());
+  });
   const [userPrompt, setUserPrompt] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
@@ -260,6 +260,12 @@ export default function ContextProvider({ children }) {
       'Gemini Key', 'GPT Key', 'Claude Key', STORAGE_KEYS.settings]) writeStored(key, undefined);
     setInstructions('');
     setSettings({ privacyMode: true, saveHistory: true });
+    setSelectedModels(Object.fromEntries(PROVIDERS.map(provider => [provider, modelCatalog[provider].default_model])));
+    changeProvider('Gemini');
+    changeMode('chat');
+    setOpenModal(false);
+    setOpenSidebar(false);
+    setModels(false);
     setUserName('');
     setSignedIn(false);
   };

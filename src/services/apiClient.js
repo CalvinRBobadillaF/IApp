@@ -40,7 +40,11 @@ export async function sendChatRequest(payload, { signal } = {}) {
 export async function getModelCatalog(signal) {
   const data = await apiRequest('/models', { signal, timeout: 20_000 });
   for (const key of ['Gemini', 'GPT', 'Claude']) {
-    if (!Array.isArray(data[key]?.models) || !data[key].models.length || typeof data[key].default_model !== 'string') {
+    const provider = data[key];
+    if (!Array.isArray(provider?.models) || !provider.models.length ||
+        !provider.models.every(model => typeof model?.value === 'string' && model.value && typeof model.label === 'string') ||
+        !provider.models.some(model => model.value === provider.default_model) ||
+        (provider.image_model != null && typeof provider.image_model !== 'string')) {
       throw new Error('Invalid model catalog');
     }
   }
