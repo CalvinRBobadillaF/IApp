@@ -177,6 +177,19 @@ The suite verifies actual SDK request serialization, all three providers' inline
 
 Interpreter provider credit errors (`402`) and [DeepL character/spending limits (`456`)](https://developers.deepl.com/docs/best-practices/error-handling) are surfaced as `429` with billing-specific guidance, not a generic internal error. Retrying cannot fix exhausted credit or an account spending cap. Provider-side `408`/`504` responses are surfaced as timeouts. Error logs include the upstream HTTP status but never its response body or request contents.
 
+### Credentials rejected even when capabilities are true
+
+The capability flags only check whether the expected environment variable contains a nonempty value. They do not authenticate against providers. A `502` response saying that credentials or permissions were rejected means the provider returned `401` or `403`; it is different from a missing variable (`503`) or an undeployed route (`404`). The latest errors identify the provider, the operation (session creation or translation), and the exact environment variable to review.
+
+| Failing stage/provider | Check in the provider account and Render |
+| --- | --- |
+| Session creation / Deepgram | `DEEPGRAM_API_KEY` must have **Member or higher** permissions for [temporary-token grants](https://developers.deepgram.com/reference/auth/tokens/grant). A key that previously transcribed directly may not have permission to mint tokens. |
+| Session creation / Gladia | `GLADIA_API_KEY` must be an active account API key with access to [live transcription](https://docs.gladia.io/api-reference/v2/live/init). |
+| Translation / DeepL | Use a DeepL **API** subscription key in `DEEPL_API_KEY`. Check any `DEEPL_API_URL` override matches the plan: `:fx` keys use Free; other keys use Pro. See [DeepL authentication](https://developers.deepl.com/docs/getting-started/auth). |
+| Translation / Google | `GOOGLE_TRANSLATE_API_KEY` needs Cloud Translation API enabled and billing active in its Google Cloud project. API restrictions must permit Cloud Translation, and application restrictions must allow server traffic instead of browser referrers. Basic v2 supports API keys; see [Google authentication](https://docs.cloud.google.com/translate/docs/authentication). |
+
+Enter only each raw key value in Render—no surrounding quotes, `Bearer`, `Token`, `DeepL-Auth-Key`, or `NAME=` prefix. The backend adds authentication headers itself. Never put these secrets in the frontend or paste them into error reports. After correcting a value, save/redeploy the **same IApp Render service**. To identify a generic error from an older deployment, use its `X-Request-ID` with the Render log fields `operation`, `provider`, and `upstream_status`; do not infer which provider failed only from the language you selected.
+
 The four-request concurrency limit is per worker and is not authentication or a per-user rate limit. The public API currently has no user authentication. CORS restricts browser origins only; it does not prevent direct API calls or enforce a spending limit.
 
 **Before opening the Interpreter to arbitrary public users, add real user authentication and per-user rate/spending limits.** The display-name login is not authentication. Anyone who can call the public session endpoint can obtain short-lived inference access, and active audio streams can outlive a token's connection deadline. Set provider account budgets/alerts and monitor usage; a concurrency semaphore alone does not control the cost of these streams.

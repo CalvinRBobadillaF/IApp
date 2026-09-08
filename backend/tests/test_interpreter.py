@@ -270,6 +270,38 @@ def test_provider_errors_and_logs_never_include_content_or_secrets(monkeypatch, 
     assert interpreter.request_slots._value == 4
 
 
+@pytest.mark.parametrize("status", [401, 403])
+@pytest.mark.parametrize("path,payload,key,label,hint", [
+    ("session", {"provider": "deepgram"}, "DEEPGRAM_API_KEY", "Deepgram", "Member or higher"),
+    ("session", {"provider": "gladia"}, "GLADIA_API_KEY", "Gladia", "live transcription"),
+    ("translate", translate_payload(), "DEEPL_API_KEY", "DeepL", "Free or Pro"),
+    ("translate", translate_payload(target_lang="ht"), "GOOGLE_TRANSLATE_API_KEY", "Google Cloud Translation", "browser-referrer"),
+])
+def test_auth_errors_identify_exact_provider_and_safe_setup_guidance(monkeypatch, caplog, status, path, payload, key, label, hint):
+    mock_http(monkeypatch, {"error": f"{SECRET} upstream-private-detail"}, status=status)
+    response = post(path, payload)
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert detail.startswith(f"{label} rejected")
+    assert key in detail and hint in detail
+    assert "raw key value" in detail
+    assert ("creating a transcription session" if path == "session" else "translating text") in detail
+    assert response.headers["x-request-id"]
+    assert SECRET not in detail + caplog.text
+    assert "upstream-private-detail" not in detail + caplog.text
+    assert not any(other in detail for other in KEYS if other != key)
+
+
+def test_unknown_provider_label_cannot_leak_arbitrary_data():
+    request = httpx.Request("POST", "https://example.test")
+    response = httpx.Response(401, request=request)
+    error = httpx.HTTPStatusError(SECRET, request=request, response=response)
+    mapped = interpreter.interpreter_error(error, provider=SECRET)
+    assert mapped.status_code == 502
+    assert SECRET not in mapped.detail
+    assert mapped.detail.startswith("The interpreter provider rejected")
+
+
 def test_timeout_releases_capacity_and_is_sanitized(monkeypatch):
     mock_http(monkeypatch, {}, error=httpx.ReadTimeout(SECRET))
     response = post("session", {"provider": "deepgram"})

@@ -36,6 +36,17 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe('Interpreter lifecycle', () => {
+  it('keeps completed-row callbacks stable while the timer runs and resets duration on clear', async () => {
+    vi.useFakeTimers();
+    const { result } = await setup();
+    await start(result);
+    const retry = result.current.retry;
+    act(() => vi.advanceTimersByTime(3000));
+    expect(result.current.elapsedSeconds).toBe(3);
+    expect(result.current.retry).toBe(retry);
+    act(() => { result.current.stop(); result.current.clear(); });
+    expect(result.current.elapsedSeconds).toBe(0);
+  });
   it('loads capabilities but never captures on mount, including StrictMode', async () => {
     const { result } = await setup(true, true);
     expect(result.current.canStart).toBe(true);

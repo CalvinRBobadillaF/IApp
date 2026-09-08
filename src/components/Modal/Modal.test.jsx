@@ -14,6 +14,11 @@ const settings = () => ({
 });
 
 describe("settings dialog", () => {
+  it("explains Interpreter privacy boundaries separately from chat settings", () => {
+    render(<Context.Provider value={{ ...settings(), activeSection: 'interpreter' }}><Modal /></Context.Provider>);
+    expect(screen.getByText(/changing privacy mode stops listening and clears its transcript and glossary/)).toBeTruthy();
+    expect(screen.getByText(/apply to Chat, not speech or translation/)).toBeTruthy();
+  });
   it("excludes private context controls and accurately explains retention", () => {
     const context = settings();
     render(<Context.Provider value={context}><Modal /></Context.Provider>);

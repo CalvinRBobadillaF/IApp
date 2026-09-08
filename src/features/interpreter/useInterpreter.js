@@ -106,6 +106,7 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     lastFinal.current = null;
     lastNonHt.current = 'en';
     updateRows(() => []);
+    setElapsedSeconds(0);
     setInterimText('');
     setError('');
   }, [abortTranslations, updateRows]);
@@ -230,10 +231,10 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     }
   }, [unavailable, capabilitiesLoading, source, captureKreyol, privacyMode, glossary, htMode, subtitleOnly, translateRow, updateRows, stop]);
 
-  const retry = id => {
+  const retry = useCallback(id => {
     const row = rowsRef.current.find(item => item.id === id);
     if (row?.failed && !translations.current.has(id)) void translateRow(row);
-  };
+  }, [translateRow]);
   const setGlossary = value => {
     if (privacyMode || runRef.current) return;
     try { changeGlossary(validateGlossary(value)); return true; }

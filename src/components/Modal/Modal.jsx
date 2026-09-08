@@ -7,7 +7,7 @@ export default function Modal() {
   const {
     setOpenModal, modelFeature, selectedModels = {}, modelCatalog = {}, setSelectedModel,
     privacyMode, setPrivacyMode, saveHistory, setSaveHistory, instructions = "", setInstructions,
-    clearHistory, loading, attachmentsLoading, storageWarning,
+    clearHistory, loading, attachmentsLoading, storageWarning, activeSection,
   } = useContext(Context);
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
@@ -61,6 +61,7 @@ export default function Modal() {
           <button ref={closeRef} type="button" className="settings-close" onClick={() => setOpenModal(false)} aria-label="Close settings"><Icon name="close" /></button>
         </header>
         <p id={descriptionId} className="settings-intro">Choose how your conversations work. Changes apply immediately.</p>
+        {activeSection === 'interpreter' && <p className="settings-retention">Interpreter: changing privacy mode stops listening and clears its transcript and glossary. Privacy on excludes the glossary; transcripts are session-only in both modes. The chat model, saved history, and custom instructions below apply to Chat, not speech or translation.</p>}
 
         <section className="settings-section">
           <label htmlFor={modelId} className="settings-label">{modelFeature === "GPT" ? "ChatGPT" : modelFeature} chat model</label>

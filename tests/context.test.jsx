@@ -99,6 +99,36 @@ describe('conversation and privacy boundaries', () => {
 });
 
 describe('request lifecycle', () => {
+  it('preserves a chat draft and history across tool navigation', async () => {
+    const { result } = await setup({ normal: true });
+    await send(result, 'Keep this conversation');
+    const chatId = result.current.currentChatId;
+    act(() => { result.current.setUserPrompt('Unsent draft'); result.current.setOpenSidebar(true); result.current.setOpenModal(true); });
+    act(() => result.current.setActiveSection('tools'));
+    expect(result.current).toMatchObject({ activeSection: 'tools', currentChatId: chatId, userPrompt: 'Unsent draft', openSidebar: false, openModal: false });
+    act(() => result.current.setActiveSection('interpreter'));
+    act(() => result.current.loadChat(chatId));
+    expect(result.current.activeSection).toBe('chat');
+    expect(result.current.currentChat.messages).toHaveLength(2);
+    act(() => result.current.setActiveSection('invalid'));
+    expect(result.current.activeSection).toBe('chat');
+  });
+
+  it('cancels pending chat work on tool navigation and ignores late replies', async () => {
+    const request = deferred();
+    sendPrompt.mockReturnValue(request.promise);
+    const { result } = await setup();
+    let running;
+    act(() => { running = result.current.onSent('Pending'); });
+    const signal = sendPrompt.mock.calls[0][1].signal;
+    act(() => result.current.setActiveSection('tools'));
+    expect(signal.aborted).toBe(true);
+    await act(async () => { request.resolve(answer); await running; });
+    expect(result.current.activeSection).toBe('tools');
+    expect(result.current.currentChat.messages).toHaveLength(1);
+    act(() => result.current.newChat());
+    expect(result.current.activeSection).toBe('chat');
+  });
   it('locks immediately against same-tick duplicate sends', async () => {
     const request = deferred();
     sendPrompt.mockReturnValue(request.promise);
