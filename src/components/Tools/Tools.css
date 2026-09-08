@@ -1,0 +1,25 @@
+.iapp-tools .chat-header h1 { font-size: 19px; font-weight: 600; }
+.iapp-tools .tools-content { flex: 1; min-height: 0; overflow-y: auto; width: 100%; padding: clamp(28px, 6vw, 70px); }
+.iapp-tools .tools-intro, .iapp-tools .tools-card, .iapp-tools .tools-footnote { max-width: 680px; }
+.iapp-tools .tools-eyebrow { color: var(--chat-accent); font-size: 10px; letter-spacing: .16em; margin-bottom: 18px; }
+.iapp-tools .tools-intro h2 { font-size: clamp(27px, 3vw, 38px); font-weight: 500; line-height: 1.25; letter-spacing: -.025em; }
+.iapp-tools .tools-intro > p:last-child { margin-top: 14px; color: var(--chat-muted); font-size: 14px; line-height: 1.7; }
+.iapp-tools .tools-card { display: flex; width: 100%; align-items: flex-start; gap: 22px; margin-top: 36px; padding: 26px; border: 1px solid var(--chat-border); background: var(--chat-panel); border-radius: 17px; text-align: left; transition: border-color .15s, background .15s; }
+.iapp-tools .tools-card:hover { border-color: var(--chat-accent); background: var(--chat-accent-soft); }
+.iapp-tools .tools-card-symbol { width: 57px; height: 57px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 2px; background: var(--chat-accent-soft); color: var(--chat-accent); border: 1px solid var(--chat-border); border-radius: 14px; font-size: 20px; font-weight: 600; }
+.iapp-tools .tools-card-symbol > span { font-size: 16px; align-self: flex-end; margin-bottom: 10px; }
+.iapp-tools .tools-card-copy { display: flex; flex-direction: column; min-width: 0; }
+.iapp-tools .tools-card-title { font-size: 19px; font-weight: 600; margin-bottom: 10px; }
+.iapp-tools .tools-card-description { font-size: 14px; line-height: 1.65; color: var(--chat-muted); }
+.iapp-tools .tools-card-meta { font-size: 11px; line-height: 1.6; margin-top: 16px; color: var(--chat-muted); }
+.iapp-tools .tools-card-action { display: flex; align-items: center; gap: 9px; margin-top: 24px; font-size: 12px; font-weight: 600; color: var(--chat-accent); }
+.iapp-tools .tools-card-action svg { width: 17px; height: 17px; }
+.iapp-tools .tools-footnote { color: var(--chat-muted); font-size: 11px; line-height: 1.7; margin-top: 18px; }
+@media (max-width: 600px) {
+  .iapp-tools .tools-content { padding: 28px 18px; }
+  .iapp-tools .tools-card { padding: 20px; gap: 15px; }
+  .iapp-tools .tools-card-symbol { width: 45px; height: 45px; font-size: 17px; }
+  .iapp-tools .tools-card-symbol > span { font-size: 13px; margin-bottom: 7px; }
+  .iapp-tools .tools-card-title { font-size: 17px; }
+  .iapp-tools .tools-card-description { font-size: 13px; }
+}

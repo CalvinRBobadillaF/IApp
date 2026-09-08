@@ -7,6 +7,11 @@ const sampleImage = await readFile(new URL('../../src/assets/catProfile.jpeg', i
 const server = createServer(async (request, response) => {
   response.setHeader('Content-Type', 'application/json');
   response.setHeader('Cache-Control', 'no-store');
+  if (request.method === 'GET' && request.url === '/api/v1/interpreter/capabilities') {
+    response.end(JSON.stringify({ languages: ['en', 'es', 'ht'],
+      transcription: { deepgram: false, gladia: false }, translation: { deepl: false, google: false } }));
+    return;
+  }
   if (request.method === 'GET' && request.url === '/api/v1/models') {
     response.end(JSON.stringify(FALLBACK_CATALOG));
     return;

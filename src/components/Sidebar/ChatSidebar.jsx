@@ -13,7 +13,7 @@ function SidebarIcon({ name }) {
 
 export default function ChatSidebar({ provider = 'Gemini' }) {
   const { chats, currentChatId, loadChat, newChat, openSidebar, setOpenSidebar,
-    deleteStorage, handleDelete, setOpenModal } = useContext(Context);
+    deleteStorage, handleDelete, setOpenModal, activeSection = 'chat', setActiveSection } = useContext(Context);
   const sidebarRef = useRef(null);
   useEffect(() => {
     if (!openSidebar) return;
@@ -26,6 +26,10 @@ export default function ChatSidebar({ provider = 'Gemini' }) {
   return <aside ref={sidebarRef} className={`iapp-sidebar iapp-sidebar-${provider.toLowerCase()} ${openSidebar ? 'is-open' : ''}`} aria-label={`${provider === 'GPT' ? 'ChatGPT' : provider} chat navigation`}>
     <button type="button" className="sidebar-menu" aria-label={openSidebar ? 'Close chat navigation' : 'Open chat navigation'} aria-expanded={openSidebar} onClick={() => setOpenSidebar(!openSidebar)}><SidebarIcon name="menu" /></button>
     <button type="button" className="sidebar-new" aria-label="New chat" title="New chat" onClick={() => { newChat(); setOpenSidebar(false); }}><SidebarIcon name="plus" />{openSidebar && <span>New chat</span>}</button>
+    <nav className="sidebar-workspaces" aria-label="Workspace">
+      <button type="button" aria-label="Chat" title="Chat" aria-current={activeSection === 'chat' ? 'page' : undefined} onClick={() => setActiveSection?.('chat')}><SidebarIcon name="chat" />{openSidebar && <span>Chat</span>}</button>
+      <button type="button" aria-label="Tools" title="Tools" aria-current={activeSection !== 'chat' ? 'page' : undefined} onClick={() => setActiveSection?.('tools')}><SidebarIcon name="tools" />{openSidebar && <span>Tools</span>}</button>
+    </nav>
     {openSidebar && <nav className="sidebar-history" aria-label="Recent chats">
       <h2>Recent chats</h2>
       <ul>{chats.map(chat => <li key={chat.id} className={chat.id === currentChatId ? 'is-current' : ''}>

@@ -10,6 +10,7 @@ const paths = {
   settings: "M4 7h16M4 17h16M8 4v6M16 14v6",
   arrow: "M5 12h14m-6-6 6 6-6 6",
   code: "m8 6-6 6 6 6m8-12 6 6-6 6m-3-16-2 20",
+  tools: "M3 3h7v7H3V3Zm11 0h7v7h-7V3ZM3 14h7v7H3v-7Zm11 0h7v7h-7v-7Z",
 };
 
 export default function Icon({ name, className = "" }) {

@@ -1,5 +1,5 @@
 /* One provider palette shared by chat, navigation, settings, and message content. */
-.iapp-chat, .iapp-sidebar {
+.iapp-chat, .iapp-sidebar, .iapp-overlay-theme {
   --chat-accent: #38bdf8;
   --chat-accent-soft: #11283a;
   --chat-bg: #0d0d0f;

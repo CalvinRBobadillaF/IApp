@@ -40,6 +40,7 @@ export default function ContextProvider({ children }) {
   const [openSidebar, setOpenSidebar] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [models, setModels] = useState(false);
+  const [activeSection, changeSection] = useState('chat');
   const requestRef = useRef(null);
   const fileReadRef = useRef({ generation: 0, busy: false });
   const chats = chatsByModel[modelFeature].filter(chat => chat.private === privacyMode);
@@ -110,6 +111,7 @@ export default function ContextProvider({ children }) {
   const newChat = useCallback(() => {
     cancelRequest();
     resetDraft();
+    changeSection('chat');
     changeMode('chat');
     const id = crypto.randomUUID();
     dispatch({ type: 'new', provider: modelFeature, chat: { id, private: privacyMode, messages: [] } });
@@ -158,6 +160,7 @@ export default function ContextProvider({ children }) {
     if (!chats.some(chat => chat.id === id)) return;
     cancelRequest();
     resetDraft();
+    changeSection('chat');
     changeMode('chat');
     setCurrentChatId(id);
   };
@@ -258,6 +261,7 @@ export default function ContextProvider({ children }) {
   };
   const resetStorage = () => {
     clearHistory();
+    changeSection('chat');
     for (const key of ['User', ...Object.values(MODEL_STORAGE), 'ModelFeature', 'currentChatId',
       'Gemini Key', 'GPT Key', 'Claude Key', STORAGE_KEYS.settings]) writeStored(key, undefined);
     setInstructions('');
@@ -280,6 +284,14 @@ export default function ContextProvider({ children }) {
     if (window.confirm('Delete this chat?')) deleteChat(chatId);
   };
 
+  const setActiveSection = section => {
+    if (!['chat', 'tools', 'interpreter'].includes(section)) return;
+    cancelRequest();
+    setOpenSidebar(false);
+    setOpenModal(false);
+    changeSection(section);
+  };
+
   return <Context.Provider value={{
     chats, currentChat, currentChatId, loadChat, newChat, deleteChat, clearHistory,
     onSent, userPrompt, setUserPrompt, loading: Boolean(pending), pending, cancelRequest,
@@ -290,5 +302,6 @@ export default function ContextProvider({ children }) {
     modelFeature, setModelFeature, selectedModels, setSelectedModel, modelCatalog,
     openSidebar, setOpenSidebar, openModal, setOpenModal, models, setModels,
     userName, setUserName, signedIn, completeLogin, deleteStorage, handleDelete, resetStorage,
+    activeSection, setActiveSection,
   }}>{children}</Context.Provider>;
 }

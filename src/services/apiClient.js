@@ -1,6 +1,6 @@
 const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || '/api/v1').replace(/\/+$/, '');
 
-async function apiRequest(path, { signal, timeout = 180_000, ...options } = {}) {
+export async function apiRequest(path, { signal, timeout = 180_000, ...options } = {}) {
   const controller = new AbortController();
   const abort = () => controller.abort();
   if (signal?.aborted) controller.abort();
@@ -13,9 +13,8 @@ async function apiRequest(path, { signal, timeout = 180_000, ...options } = {}) 
     if (!response.ok) {
       let message = typeof data?.detail === 'string' ? data.detail : '';
       if (!message && Array.isArray(data?.detail)) message = data.detail.map(item => item.msg).join('; ');
-      if (!message) message = response.status === 404
-        ? 'API route not found. Check VITE_API_BASE_URL ends in /api/v1 and deploy the updated backend.'
-        : `The API returned HTTP ${response.status}. Check the backend logs.`;
+      if (response.status === 404) message = 'API route not found. Check VITE_API_BASE_URL ends in /api/v1 and deploy the updated backend.';
+      if (!message) message = `The API returned HTTP ${response.status}. Check the backend logs.`;
       throw new Error(message);
     }
     if (!data || typeof data !== 'object') throw new Error('The API returned an unexpected response. Check the configured API URL.');

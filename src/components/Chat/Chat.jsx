@@ -2,7 +2,6 @@ import { memo, useContext, useEffect, useRef, useState } from "react";
 import { Context } from "../../Context/context.js";
 import { ACCEPTED_FILE_TYPES } from "../../services/attachments.js";
 import { assets } from "../../assets/assets";
-import Modal from "../Modal/Modal";
 import RenderMessage, { UserMessage } from "../RenderMessage/RenderMessage";
 import Icon from "./Icon";
 import "./Chat.css";
@@ -49,7 +48,7 @@ export default function Chat({ provider }) {
     currentChat, currentChatId, onSent, userPrompt, setUserPrompt, loading, cancelRequest,
     error, dismissError, attachments = [], addAttachments, removeAttachment, attachmentError,
     attachmentsLoading, mode = "chat", setMode, setModelFeature, selectedModels = {},
-    modelCatalog = {}, privacyMode, openModal, setOpenModal, openSidebar, setOpenSidebar,
+    modelCatalog = {}, privacyMode, setOpenModal, openSidebar, setOpenSidebar,
     storageWarning, contextNotice, saveHistory, userName,
   } = useContext(Context);
   const [dragging, setDragging] = useState(false);
@@ -177,7 +176,6 @@ export default function Chat({ provider }) {
         </form>
         <p className="chat-footer-note">{privacyMode ? "Private: no conversation context or saved history. Provider retention still applies." : `${saveHistory === false ? "History is not saved to this browser. " : ""}Recent messages provide context. File contents remain in memory until you reload.`} <span>Check important information.</span></p>
       </div>
-      {openModal && <Modal />}
     </main>
   );
 }
