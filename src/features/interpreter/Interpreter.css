@@ -25,6 +25,17 @@
 .iapp-interpreter .interpreter-status.is-listening { color: var(--chat-accent); }
 .iapp-interpreter .interpreter-status.is-listening > span { background: var(--chat-accent); box-shadow: 0 0 0 3px var(--chat-accent-soft); }
 .iapp-interpreter .interpreter-timer { font: 12px Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--chat-muted); }
+.iapp-interpreter .interpreter-credentials { margin-top: 16px; border-top: 1px solid var(--chat-border); padding-top: 13px; }
+.iapp-interpreter .interpreter-credentials summary { cursor: pointer; font-size: 12px; color: var(--chat-accent); line-height: 1.7; }
+.iapp-interpreter .interpreter-credentials summary > span { color: var(--chat-muted); font-size: 10px; margin-left: 10px; }
+.iapp-interpreter .interpreter-credentials-content { margin-top: 13px; max-width: 720px; }
+.iapp-interpreter .interpreter-key-note { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--chat-border); border-radius: 8px; color: var(--chat-muted); background: var(--chat-bg); font-size: 11px; line-height: 1.7; }
+.iapp-interpreter .interpreter-key-form { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+.iapp-interpreter .interpreter-key-form > button { align-self: flex-start; }
+.iapp-interpreter .interpreter-key-form .interpreter-mode-help { margin-top: 0; }
+.iapp-interpreter .interpreter-key-status { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 14px; color: var(--chat-muted); font-size: 11px; line-height: 1.65; }
+.iapp-interpreter .interpreter-key-error { color: #ffceca; margin-top: 12px; font-size: 11px; line-height: 1.65; }
+.iapp-interpreter .interpreter-credentials summary:focus-visible { outline: 2px solid var(--chat-accent); outline-offset: 3px; border-radius: 3px; }
 .iapp-interpreter .interpreter-banner { flex-shrink: 0; margin: 0; padding: 12px 14px; border: 1px solid var(--chat-border); border-radius: 9px; background: var(--chat-accent-soft); font-size: 12px; line-height: 1.65; color: var(--chat-accent); }
 .iapp-interpreter .interpreter-banner-warning { background: #342818; border-color: #806136; color: #f0cc91; }
 .iapp-interpreter .interpreter-banner-warning p + p { margin-top: 7px; }

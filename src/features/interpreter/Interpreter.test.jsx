@@ -184,4 +184,41 @@ describe('Interpreter workspace', () => {
     rerender(<Context.Provider value={{ ...context }}><Interpreter onBack={onBack} /></Context.Provider>);
     expect(document.activeElement).toBe(term);
   });
+
+  it.each([
+    { capabilitiesLoading: true, capabilitiesError: '' },
+    { capabilitiesLoading: false, capabilitiesError: 'Backend unavailable.' },
+  ])('permits local-key subtitles without waiting for the backend: %j', capabilityState => {
+    Object.assign(state, { credentialMode: 'local', localKeyConfigured: true, subtitleOnly: true, backendRequired: false, capabilities: null, ...capabilityState });
+    setup();
+    expect(screen.getByRole('button', { name: 'Start listening' }).disabled).toBe(false);
+    expect(screen.getByText('Ready · local key')).toBeTruthy();
+    expect(screen.queryByText('Checking interpreter configuration…')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Start listening' }));
+    expect(state.start).toHaveBeenCalledOnce();
+  });
+
+  it('explains a missing local key without requesting the server Deepgram variable', () => {
+    Object.assign(state, { credentialMode: 'local', localKeyConfigured: false, subtitleOnly: true, backendRequired: false, canStart: false, capabilities: null });
+    setup();
+    expect(screen.getByRole('alert').textContent).toContain('Add an individual Deepgram key');
+    expect(screen.queryByText('DEEPGRAM_API_KEY')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Start listening' }).disabled).toBe(true);
+  });
+
+  it('still requires the backend for translation when a local speech key is set', () => {
+    Object.assign(state, { credentialMode: 'local', localKeyConfigured: true, backendRequired: true, capabilities: { transcription: {}, translation: {} }, canStart: false });
+    setup();
+    expect(screen.getByText('DEEPL_API_KEY')).toBeTruthy();
+    expect(screen.queryByText('DEEPGRAM_API_KEY')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Start listening' }).disabled).toBe(true);
+  });
+
+  it('does not treat a configured local key as Gladia credentials', () => {
+    Object.assign(state, { credentialMode: 'local', localKeyConfigured: true, captureKreyol: true, subtitleOnly: true, backendRequired: true, capabilities: { transcription: {}, translation: {} }, canStart: false });
+    setup();
+    expect(screen.getByText('GLADIA_API_KEY')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Start listening' }).disabled).toBe(true);
+  });
 });

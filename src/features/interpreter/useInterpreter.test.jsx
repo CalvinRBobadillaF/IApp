@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import useInterpreter, { emptyGlossary, interpreterAvailability, MAX_UTTERANCES, targetLanguage, validateGlossary } from './useInterpreter.js';
 import { createInterpreterSession, getInterpreterCapabilities, translateInterpreterText } from './api.js';
 import { startInterpreterAudio } from './audioCapture.js';
+import { DEEPGRAM_LOCAL_KEY } from '../../services/interpreterCredentials.js';
 
 vi.mock('./api.js', () => ({ createInterpreterSession: vi.fn(), getInterpreterCapabilities: vi.fn(), translateInterpreterText: vi.fn() }));
 vi.mock('./audioCapture.js', () => ({ startInterpreterAudio: vi.fn() }));
@@ -290,5 +291,182 @@ describe('Interpreter pure rules', () => {
     }
     expect(() => validateGlossary({ ...emptyGlossary(), defaultIntensity: NaN })).toThrow(/intensity/);
     expect(() => validateGlossary({ ...emptyGlossary(), spelling: [{ value: 'word', variants: [] }] })).toThrow(/at least one/);
+  });
+});
+
+describe('opt-in local Deepgram credentials', () => {
+  const key = 'test-only-deepgram-key';
+  async function configure(result, remember = false) {
+    act(() => { result.current.setCredentialMode('local'); result.current.saveLocalKey(key, { remember }); });
+  }
+
+  it('defaults to server credentials even with an explicitly remembered key', async () => {
+    localStorage.setItem(DEEPGRAM_LOCAL_KEY, key);
+    const { result } = await setup();
+    expect(result.current).toMatchObject({ credentialMode: 'server', localKeyConfigured: true, localKeyRemembered: true });
+    expect(JSON.stringify(result.current)).not.toContain(key);
+    await start(result);
+    expect(audio()).not.toHaveProperty('deepgramApiKey');
+    expect(audio().createSession).toBeTypeOf('function');
+  });
+
+  it('uses a local key only in direct audio and never passes it into a backend request or public hook state', async () => {
+    const { result } = await setup();
+    await configure(result);
+    await start(result);
+    expect(audio()).toMatchObject({ provider: 'deepgram', deepgramApiKey: key });
+    expect(audio()).not.toHaveProperty('createSession');
+    expect(createInterpreterSession).not.toHaveBeenCalled();
+    await final('Hello.');
+    expect(JSON.stringify(translateInterpreterText.mock.calls)).not.toContain(key);
+    expect(JSON.stringify(result.current)).not.toContain(key);
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBeNull();
+  });
+
+  it('persists only by explicit opt-in and forgets session-only keys on unmount', async () => {
+    const first = await setup();
+    await configure(first.result);
+    first.unmount();
+    const second = await setup();
+    expect(second.result.current.localKeyConfigured).toBe(false);
+    await configure(second.result, true);
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBe(key);
+    second.unmount();
+    const third = await setup();
+    expect(third.result.current).toMatchObject({ localKeyConfigured: true, credentialMode: 'server' });
+  });
+
+  it('can transcribe subtitles with a local key while the backend is unavailable', async () => {
+    getInterpreterCapabilities.mockRejectedValue(new Error('Backend offline'));
+    const { result } = await setup();
+    await configure(result);
+    expect(result.current.canStart).toBe(false);
+    act(() => result.current.setSubtitleOnly(true));
+    expect(result.current).toMatchObject({ backendRequired: false, canStart: true });
+    await start(result);
+    await final('Local subtitles.');
+    expect(result.current.utterances).toHaveLength(1);
+    expect(translateInterpreterText).not.toHaveBeenCalled();
+    expect(createInterpreterSession).not.toHaveBeenCalled();
+  });
+
+  it('can start direct subtitles without waiting for a sleeping backend', async () => {
+    getInterpreterCapabilities.mockReturnValue(deferred().promise);
+    const { result } = await setup();
+    await configure(result);
+    act(() => result.current.setSubtitleOnly(true));
+    expect(result.current.capabilitiesLoading).toBe(true);
+    expect(result.current.canStart).toBe(true);
+    await start(result);
+    expect(result.current.status).toBe('listening');
+  });
+
+  it('replaces only Deepgram configuration, not missing translation credentials', async () => {
+    getInterpreterCapabilities.mockResolvedValue({ transcription: { deepgram: false, gladia: true }, translation: { deepl: true, google: false } });
+    const { result } = await setup();
+    await configure(result);
+    expect(result.current.canStart).toBe(false);
+    act(() => result.current.setHtMode(false));
+    expect(result.current.canStart).toBe(true);
+    await start(result);
+    await final('Hello.');
+    expect(translateInterpreterText.mock.calls[0][0]).toMatchObject({ to: 'es', privacyMode: true });
+  });
+
+  it('never applies the Deepgram key to Gladia, even when local mode is selected', async () => {
+    const { result } = await setup();
+    await configure(result);
+    act(() => result.current.setCaptureKreyol(true));
+    await start(result);
+    expect(audio().provider).toBe('gladia');
+    expect(audio()).not.toHaveProperty('deepgramApiKey');
+    await audio().createSession({ provider: 'gladia' });
+    expect(JSON.stringify(createInterpreterSession.mock.calls)).not.toContain(key);
+  });
+
+  it('requires an entered key and never silently falls back to the server on a direct failure', async () => {
+    const { result } = await setup();
+    act(() => result.current.setCredentialMode('local'));
+    await start(result);
+    expect(startInterpreterAudio).not.toHaveBeenCalled();
+    await configure(result);
+    startInterpreterAudio.mockRejectedValueOnce(new Error('Deepgram rejected the connection'));
+    await start(result);
+    expect(result.current.credentialMode).toBe('local');
+    expect(result.current.error).toMatch(/Deepgram/);
+    expect(createInterpreterSession).not.toHaveBeenCalled();
+  });
+
+  it('removes a remembered key and cannot reuse it through a stale same-tick start closure', async () => {
+    const { result } = await setup();
+    await configure(result, true);
+    let run;
+    act(() => { result.current.removeLocalKey(); run = result.current.start(); });
+    await act(async () => run);
+    expect(startInterpreterAudio).not.toHaveBeenCalled();
+    expect(result.current.localKeyConfigured).toBe(false);
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBeNull();
+  });
+
+  it('removes the old persisted key when choosing session-only replacement', async () => {
+    const { result } = await setup();
+    await configure(result, true);
+    act(() => result.current.saveLocalKey('replacement-key', { remember: false }));
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBeNull();
+    expect(result.current.localKeyRemembered).toBe(false);
+    await start(result);
+    expect(audio().deepgramApiKey).toBe('replacement-key');
+  });
+
+  it('does not change keys or mode while audio is starting/listening', async () => {
+    const pending = deferred();
+    startInterpreterAudio.mockReturnValue(pending.promise);
+    const { result } = await setup();
+    await configure(result, true);
+    let run;
+    act(() => { run = result.current.start(); });
+    act(() => { result.current.setCredentialMode('server'); result.current.removeLocalKey(); result.current.saveLocalKey('replacement'); });
+    expect(result.current.credentialMode).toBe('local');
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBe(key);
+    await act(async () => { pending.resolve({ stop: vi.fn() }); await run; });
+  });
+
+  it('keeps explicit credential storage separate from chat privacy but stops capture on privacy change', async () => {
+    const { result, rerender } = await setup(false);
+    await configure(result, true);
+    await start(result);
+    const signal = audio().signal;
+    rerender({ privacyMode: true });
+    expect(signal.aborted).toBe(true);
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBe(key);
+    expect(result.current.utterances).toEqual([]);
+  });
+
+  it('stops a stream and resets mode when another tab removes/replaces stored credentials', async () => {
+    const { result } = await setup();
+    await configure(result, true);
+    await start(result);
+    const signal = audio().signal;
+    localStorage.removeItem(DEEPGRAM_LOCAL_KEY);
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: DEEPGRAM_LOCAL_KEY })));
+    expect(signal.aborted).toBe(true);
+    expect(result.current).toMatchObject({ credentialMode: 'server', localKeyConfigured: false, status: 'idle' });
+  });
+
+  it('supports session-only use when storage fails without silently claiming save/remove succeeded', async () => {
+    const { result } = await setup();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error(key); });
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error(key); });
+    await configure(result, true);
+    expect(result.current).toMatchObject({ localKeyConfigured: true, localKeyRemembered: false });
+    expect(result.current.localKeyStorageError).toMatch(/Saving failed/);
+    expect(result.current.localKeyStorageError).not.toContain(key);
+    act(() => result.current.saveLocalKey(key, { remember: false }));
+    expect(result.current.localKeyStorageError).toMatch(/could not be cleared/);
+    let removed;
+    act(() => { removed = result.current.removeLocalKey(); });
+    expect(removed).toBe(false);
+    expect(result.current.localKeyConfigured).toBe(false);
+    expect(result.current.localKeyStorageError).toMatch(/could not remove/);
   });
 });

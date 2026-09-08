@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createInterpreterSession, getInterpreterCapabilities, translateInterpreterText } from './api.js';
 import { startInterpreterAudio } from './audioCapture.js';
+import { DEEPGRAM_LOCAL_KEY, readDeepgramCredential, removeSavedDeepgramKey, validateDeepgramKey } from '../../services/interpreterCredentials.js';
 
 export const MAX_UTTERANCES = 300;
 export const emptyGlossary = () => ({ defaultIntensity: 0.4, vocabulary: [], spelling: [] });
 export function targetLanguage(source, htMode, lastNonHt = 'en') {
   return source === 'ht' ? lastNonHt : htMode ? 'ht' : source === 'en' ? 'es' : 'en';
 }
-export function interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly }) {
+export function interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly, credentialMode = 'server', localKeyConfigured = false }) {
+  const localSpeech = credentialMode === 'local' && !captureKreyol;
+  if (localSpeech && !localKeyConfigured) return 'Enter your Deepgram key in Deepgram credentials, or switch back to server credentials.';
+  if (localSpeech && subtitleOnly) return '';
   if (!capabilities) return 'Interpreter configuration is not available. Refresh its server status.';
   const speech = captureKreyol ? 'gladia' : 'deepgram';
-  if (!capabilities.transcription[speech]) return `Configure ${captureKreyol ? 'GLADIA_API_KEY' : 'DEEPGRAM_API_KEY'} on the IApp backend to transcribe this language.`;
+  if (!localSpeech && !capabilities.transcription[speech]) return `Configure ${captureKreyol ? 'GLADIA_API_KEY' : 'DEEPGRAM_API_KEY'} on the IApp backend to transcribe this language.`;
   if (!subtitleOnly) {
     const translation = captureKreyol || htMode ? 'google' : 'deepl';
     if (!capabilities.translation[translation]) return `Configure ${translation === 'google' ? 'GOOGLE_TRANSLATE_API_KEY' : 'DEEPL_API_KEY'} on the IApp backend, or choose Subtitles only.`;
@@ -51,7 +55,8 @@ export function validateGlossary(value) {
 }
 
 // All transcript, glossary, and connection state is local to this mounted tool.
-// No global translation cache, speculative interim requests, or browser persistence.
+// No transcript persistence or global translation cache. Remembering a direct
+// Deepgram key is a separate explicit opt-in; never return its value to the UI.
 export default function useInterpreter({ privacyMode = true } = {}) {
   const [status, setStatus] = useState('idle');
   const [source, changeSource] = useState('mic');
@@ -68,6 +73,10 @@ export default function useInterpreter({ privacyMode = true } = {}) {
   const [capabilitiesError, setCapabilitiesError] = useState('');
   const [capabilityVersion, setCapabilityVersion] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [credentialMode, changeCredentialMode] = useState('server');
+  const [localCredential, changeLocalCredential] = useState(readDeepgramCredential);
+  const credentialRef = useRef(localCredential);
+  const credentialModeRef = useRef('server');
   const mounted = useRef(false);
   const runRef = useRef(null);
   const rowsRef = useRef([]);
@@ -118,6 +127,23 @@ export default function useInterpreter({ privacyMode = true } = {}) {
       stop();
       rowsRef.current = [];
     };
+  }, [stop]);
+
+  useEffect(() => {
+    const changed = event => {
+      if (event.key !== DEEPGRAM_LOCAL_KEY && event.key !== null) return;
+      // Another tab removed/replaced browser credentials. Never keep using the
+      // prior key or silently switch the active stream to a different account.
+      stop();
+      credentialModeRef.current = 'server';
+      changeCredentialMode('server');
+      const next = readDeepgramCredential();
+      credentialRef.current = next;
+      changeLocalCredential(next);
+      setError('Browser credentials changed in another tab. Listening stopped; choose your credentials again.');
+    };
+    window.addEventListener('storage', changed);
+    return () => window.removeEventListener('storage', changed);
   }, [stop]);
 
   useEffect(() => {
@@ -175,11 +201,16 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     }
   }, [privacyMode, updateRows]);
 
-  const unavailable = interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly });
-  const canStart = status === 'idle' && !capabilitiesLoading && !unavailable;
+  const backendRequired = !(credentialMode === 'local' && !captureKreyol && subtitleOnly);
+  const unavailable = interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly, credentialMode, localKeyConfigured: Boolean(localCredential.key) });
+  const canStart = status === 'idle' && !(capabilitiesLoading && backendRequired) && !unavailable;
   const start = useCallback(async () => {
     if (runRef.current || !mounted.current) return;
-    if (unavailable || capabilitiesLoading) { setError(unavailable || 'Wait for Interpreter configuration to load.'); return; }
+    const localSpeech = credentialModeRef.current === 'local' && !captureKreyol;
+    const credential = credentialRef.current;
+    const blocked = interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly,
+      credentialMode: credentialModeRef.current, localKeyConfigured: Boolean(credential.key) });
+    if (blocked || (capabilitiesLoading && !(localSpeech && subtitleOnly))) { setError(blocked || 'Wait for Interpreter configuration to load.'); return; }
     const run = { controller: new AbortController(), audio: null };
     runRef.current = run;
     setStatus('starting');
@@ -190,8 +221,10 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     try {
       const audio = await startInterpreterAudio({
         source, provider: captureKreyol ? 'gladia' : 'deepgram', signal: run.controller.signal,
-        createSession: options => createInterpreterSession({ ...options, privacy_mode: privacyMode,
-          ...(privacyMode ? {} : { glossary }) }, { signal: run.controller.signal }),
+        ...(localSpeech ? { deepgramApiKey: credential.key } : {
+          createSession: options => createInterpreterSession({ ...options, privacy_mode: privacyMode,
+            ...(privacyMode ? {} : { glossary }) }, { signal: run.controller.signal }),
+        }),
         onInterim: ({ text, lang }) => {
           if (!isCurrent()) return;
           setInterimText(typeof text === 'string' ? text.slice(0, 5000) : '');
@@ -229,7 +262,49 @@ export default function useInterpreter({ privacyMode = true } = {}) {
       stop();
       if (caught.name !== 'AbortError') setError(caught.message || 'Could not start transcription.');
     }
-  }, [unavailable, capabilitiesLoading, source, captureKreyol, privacyMode, glossary, htMode, subtitleOnly, translateRow, updateRows, stop]);
+  }, [capabilities, capabilitiesLoading, source, captureKreyol, privacyMode, glossary, htMode, subtitleOnly, translateRow, updateRows, stop]);
+
+  const setCredentialMode = value => {
+    if (runRef.current || !['server', 'local'].includes(value)) return;
+    credentialModeRef.current = value;
+    changeCredentialMode(value);
+    setError('');
+  };
+  const saveLocalKey = (value, { remember = false } = {}) => {
+    if (runRef.current) return false;
+    let key;
+    try { key = validateDeepgramKey(value); }
+    catch (caught) {
+      const next = { ...credentialRef.current, error: caught.message };
+      credentialRef.current = next;
+      changeLocalCredential(next);
+      return false;
+    }
+    const next = { key, remembered: false, error: '' };
+    if (remember === true) {
+      try { localStorage.setItem(DEEPGRAM_LOCAL_KEY, key); next.remembered = true; }
+      catch {
+        next.remembered = credentialRef.current.remembered;
+        next.error = 'Saving failed. The entered key is available for this session only; any previously saved key may still remain on this device.';
+      }
+    } else if (!removeSavedDeepgramKey()) {
+      next.remembered = credentialRef.current.remembered;
+      next.error = 'Using the entered key for this session, but browser storage could not be cleared. Any previously saved key may still remain; clear this site’s data in your browser when possible.';
+    }
+    credentialRef.current = next;
+    changeLocalCredential(next);
+    setError('');
+    return true;
+  };
+  const removeLocalKey = () => {
+    if (runRef.current) return false;
+    const removed = removeSavedDeepgramKey();
+    const next = { key: '', remembered: removed ? false : credentialRef.current.remembered,
+      error: removed ? '' : 'The key is no longer active in this session, but IApp could not remove it from browser storage. Clear this site’s data in your browser; revoke the key in Deepgram if needed.' };
+    credentialRef.current = next;
+    changeLocalCredential(next);
+    return removed;
+  };
 
   const retry = useCallback(id => {
     const row = rowsRef.current.find(item => item.id === id);
@@ -249,5 +324,8 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     capabilities, capabilitiesLoading, capabilitiesError,
     reloadCapabilities: () => { if (!runRef.current) setCapabilityVersion(version => version + 1); },
     elapsedSeconds, start, stop, clear, retry, glossary, setGlossary, canStart,
+    credentialMode, setCredentialMode, localKeyConfigured: Boolean(localCredential.key),
+    localKeyRemembered: localCredential.remembered, localKeyStorageError: localCredential.error,
+    saveLocalKey, removeLocalKey, backendRequired,
   };
 }

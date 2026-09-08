@@ -4,6 +4,7 @@ import Icon from '../../components/Chat/Icon.jsx';
 import '../../components/Chat/Chat.css';
 import useInterpreter from './useInterpreter.js';
 import GlossaryEditor from './GlossaryEditor.jsx';
+import DeepgramKeySettings from './DeepgramKeySettings.jsx';
 import './Interpreter.css';
 
 const LANGUAGE_NAMES = { en: 'English', es: 'Spanish', ht: 'Haitian Kreyòl' };
@@ -50,6 +51,9 @@ export default function Interpreter({ onBack }) {
     subtitleOnly, setSubtitleOnly, utterances = EMPTY_UTTERANCES, interimText, interimLang,
     error, dismissError, capabilities, capabilitiesLoading, capabilitiesError,
     reloadCapabilities, elapsedSeconds, start, stop, clear, retry, glossary, setGlossary, canStart,
+    credentialMode = 'server', setCredentialMode, localKeyConfigured = false,
+    localKeyRemembered = false, localKeyStorageError = '', saveLocalKey, removeLocalKey,
+    backendRequired = true,
   } = useInterpreter({ privacyMode });
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [showJump, setShowJump] = useState(false);
@@ -58,13 +62,15 @@ export default function Interpreter({ onBack }) {
   const busy = status !== 'idle';
   const listening = status === 'listening';
   const hasContent = utterances.length > 0 || Boolean(interimText);
-  const selectedTranscription = captureKreyol ? capabilities?.transcription?.gladia : capabilities?.transcription?.deepgram;
+  const usesLocalDeepgram = credentialMode === 'local' && !captureKreyol;
+  const selectedTranscription = usesLocalDeepgram ? localKeyConfigured : captureKreyol ? capabilities?.transcription?.gladia : capabilities?.transcription?.deepgram;
   const selectedTranslation = captureKreyol || htMode ? capabilities?.translation?.google : capabilities?.translation?.deepl;
-  const missingTranscription = capabilities && !selectedTranscription;
+  const missingTranscription = (usesLocalDeepgram || capabilities) && !selectedTranscription;
   const missingTranslation = capabilities && !subtitleOnly && !selectedTranslation;
-  const capabilityIssue = Boolean(capabilitiesError || missingTranscription || missingTranslation);
+  const backendLoading = capabilitiesLoading && backendRequired;
+  const capabilityIssue = Boolean((capabilitiesError && backendRequired) || missingTranscription || missingTranslation);
   const closeGlossary = useCallback(() => setGlossaryOpen(false), []);
-  const readyLabel = capabilitiesLoading ? 'Checking setup' : capabilityIssue ? 'Setup needed' : 'Ready';
+  const readyLabel = backendLoading ? 'Checking setup' : capabilityIssue ? 'Setup needed' : usesLocalDeepgram ? 'Ready · local key' : 'Ready';
 
   useEffect(() => {
     const viewport = scrollRef.current;
@@ -113,17 +119,18 @@ export default function Interpreter({ onBack }) {
               <span className={`interpreter-status ${listening ? 'is-listening' : ''}`} role="status"><span aria-hidden="true" />{listening ? 'Listening' : status === 'starting' ? 'Connecting' : readyLabel}</span>
               <span className="interpreter-timer" aria-label={`Session duration ${formatElapsed(elapsedSeconds)}`}>{formatElapsed(elapsedSeconds)}</span>
               {busy ? <button type="button" className="interpreter-stop" onClick={stop}>{status === 'starting' ? 'Cancel start' : 'Stop listening'}</button>
-                : <button type="button" className="interpreter-start" disabled={!canStart || capabilitiesLoading} onClick={start}>Start listening</button>}
+                : <button type="button" className="interpreter-start" disabled={!canStart || backendLoading} onClick={start}>Start listening</button>}
             </div>
           </div>
+          <DeepgramKeySettings credentialMode={credentialMode} setCredentialMode={setCredentialMode} localKeyConfigured={localKeyConfigured} localKeyRemembered={localKeyRemembered} localKeyStorageError={localKeyStorageError} saveLocalKey={saveLocalKey} removeLocalKey={removeLocalKey} busy={busy} captureKreyol={captureKreyol} />
         </section>
 
-        {capabilitiesLoading && <p className="interpreter-banner" role="status">Checking interpreter configuration…</p>}
-        {!capabilitiesLoading && capabilityIssue && <div className="interpreter-banner interpreter-banner-warning" role="alert">
-          {capabilitiesError && <p>{errorText(capabilitiesError)} Check that the updated IApp backend is deployed and reachable.</p>}
-          {missingTranscription && <p>{captureKreyol ? 'Kreyòl speech needs Gladia.' : 'English / Spanish speech needs Deepgram.'} Set <code>{captureKreyol ? 'GLADIA_API_KEY' : 'DEEPGRAM_API_KEY'}</code> on the IApp backend, then recheck availability.</p>}
+        {backendLoading && <p className="interpreter-banner" role="status">Checking interpreter configuration…</p>}
+        {!backendLoading && capabilityIssue && <div className="interpreter-banner interpreter-banner-warning" role="alert">
+          {capabilitiesError && backendRequired && <p>{errorText(capabilitiesError)} Check that the updated IApp backend is deployed and reachable.</p>}
+          {missingTranscription && (usesLocalDeepgram ? <p>Add an individual Deepgram key under Deepgram credentials, or select Server key.</p> : <p>{captureKreyol ? 'Kreyòl speech needs Gladia.' : 'English / Spanish speech needs Deepgram.'} Set <code>{captureKreyol ? 'GLADIA_API_KEY' : 'DEEPGRAM_API_KEY'}</code> on the IApp backend, then recheck availability.</p>)}
           {missingTranslation && <p>{captureKreyol || htMode ? 'Kreyòl translation needs Google Cloud Translation.' : 'English / Spanish translation needs DeepL.'} Set <code>{captureKreyol || htMode ? 'GOOGLE_TRANSLATE_API_KEY' : 'DEEPL_API_KEY'}</code> on the IApp backend, or use Subtitles only.</p>}
-          <button type="button" className="interpreter-secondary" disabled={busy} onClick={reloadCapabilities}>Recheck availability</button>
+          {backendRequired && <button type="button" className="interpreter-secondary" disabled={busy} onClick={reloadCapabilities}>Recheck availability</button>}
         </div>}
         {error && <div className="interpreter-banner interpreter-banner-error" role="alert"><p>{errorText(error)}</p><button type="button" className="chat-icon-button" aria-label="Dismiss interpreter error" onClick={dismissError}><Icon name="close" /></button></div>}
 
@@ -155,7 +162,7 @@ export default function Interpreter({ onBack }) {
           {showJump && <button type="button" className="interpreter-jump" onClick={jumpToLatest}>Jump to latest ↓</button>}
         </section>
 
-        <footer className="interpreter-footer"><Icon name="lock" /><p>{privacyMode ? 'Privacy mode excludes the custom glossary. ' : ''}IApp keeps this transcript in memory and does not save audio. Audio goes to the speech provider; {subtitleOnly ? 'Subtitles only does not send text for translation.' : 'completed text goes through IApp to the translation provider.'} Provider retention still applies. Leaving this tool stops capture and discards the transcript.</p></footer>
+        <footer className="interpreter-footer"><Icon name="lock" /><p>{privacyMode ? 'Privacy mode excludes the custom glossary. ' : ''}IApp keeps this transcript in memory and does not save audio. Audio goes to the speech provider; {subtitleOnly ? 'Subtitles only does not send text for translation.' : 'completed text goes through IApp to the translation provider.'} Provider retention still applies. Leaving this tool stops capture and discards the transcript. An explicitly remembered Deepgram key stays on this device until removed, including in privacy mode.</p></footer>
       </div>
       {glossaryOpen && <GlossaryEditor glossary={glossary} setGlossary={setGlossary} privacyMode={privacyMode} busy={busy} onClose={closeGlossary} />}
     </main>

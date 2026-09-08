@@ -6,6 +6,7 @@ import { FALLBACK_CATALOG, initialModels, MODEL_STORAGE } from '../services/mode
 import { attachmentPayload, buildHistory, chatsReducer, emptyChats, initialSettings, normalizeChats,
   PROVIDERS, readStored, serializableChats, STORAGE_KEYS } from '../services/chatState.js';
 import { MAX_FILES, MAX_TOTAL_BYTES, readAttachment, validateFile } from '../services/attachments.js';
+import { DEEPGRAM_LOCAL_KEY } from '../services/interpreterCredentials.js';
 
 export default function ContextProvider({ children }) {
   const [settings, setSettings] = useState(initialSettings);
@@ -263,7 +264,7 @@ export default function ContextProvider({ children }) {
     clearHistory();
     changeSection('chat');
     for (const key of ['User', ...Object.values(MODEL_STORAGE), 'ModelFeature', 'currentChatId',
-      'Gemini Key', 'GPT Key', 'Claude Key', STORAGE_KEYS.settings]) writeStored(key, undefined);
+      'Gemini Key', 'GPT Key', 'Claude Key', STORAGE_KEYS.settings, DEEPGRAM_LOCAL_KEY]) writeStored(key, undefined);
     setInstructions('');
     setSettings({ privacyMode: true, saveHistory: true });
     setSelectedModels(Object.fromEntries(PROVIDERS.map(provider => [provider, modelCatalog[provider].default_model])));
@@ -277,7 +278,7 @@ export default function ContextProvider({ children }) {
   };
   const deleteStorage = event => {
     event?.stopPropagation();
-    if (window.confirm('Clear all IApp chats, settings, and profile stored in this browser?')) resetStorage();
+    if (window.confirm('Clear all IApp chats, settings, profile, and any remembered Interpreter key stored in this browser?')) resetStorage();
   };
   const handleDelete = (event, chatId) => {
     event?.stopPropagation();

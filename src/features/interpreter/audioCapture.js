@@ -43,6 +43,24 @@ function sessionOptions(session, provider) {
   return { url: url.href, protocols };
 }
 
+function directDeepgramOptions(apiKey, provider) {
+  if (provider !== 'deepgram') throw new Error('A browser API key can only be used for English/Spanish transcription with Deepgram.');
+  if (typeof apiKey !== 'string' || !apiKey.trim() || apiKey.trim().length > 8192
+      || !/^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/.test(apiKey.trim())) {
+    throw new Error('Enter a valid raw Deepgram API key without quotes or an authorization prefix.');
+  }
+  // The opt-in compatibility path goes directly to the same fixed provider as
+  // the backend session. Credentials belong only in the WebSocket subprotocol,
+  // never in a URL, server request, transcript, or error message.
+  const params = new URLSearchParams({
+    model: 'nova-3', language: 'multi', smart_format: 'true',
+    punctuate: 'true', numerals: 'true', interim_results: 'true',
+    filler_words: 'false', endpointing: '300', utterance_end_ms: '1200',
+    no_delay: 'true', vad_events: 'true', diarize: 'false', mip_opt_out: 'true',
+  });
+  return { url: `wss://api.deepgram.com/v1/listen?${params}`, protocols: ['token', apiKey.trim()] };
+}
+
 // Explicit little-endian output, irrespective of the browser's platform.
 function pcm16(samples) {
   const bytes = new ArrayBuffer(samples.length * 2);
@@ -56,22 +74,24 @@ function pcm16(samples) {
 
 /**
  * Owns one user-initiated browser audio session. The caller must abort when
- * navigating away. No permanent provider credentials or audio are persisted.
+ * navigating away. This module never persists credentials or audio.
  *
  * Resolves only after the socket opens and recording starts. Startup failures
  * reject; failures after startup notify onError(message), then onEnded(). An
  * explicit stop/abort is silent. Late permission/session results cannot restart
- * capture. createSession must request short-lived credentials from the backend.
+ * capture. Normally createSession requests short-lived backend credentials. The
+ * explicit Deepgram-only compatibility option bypasses it using a supplied key.
  */
 export async function startInterpreterAudio({
-  source = 'mic', provider = 'deepgram', signal, createSession,
+  source = 'mic', provider = 'deepgram', signal, createSession, deepgramApiKey,
   onFinal, onInterim, onError, onEnded,
 }) {
   if (signal?.aborted) throw abortError();
   if (!['mic', 'tab'].includes(source) || !['deepgram', 'gladia'].includes(provider)) {
     throw new Error('Choose a supported audio source and transcription provider.');
   }
-  if (typeof createSession !== 'function') throw new Error('The interpreter backend is not configured.');
+  const directOptions = deepgramApiKey === undefined ? null : directDeepgramOptions(deepgramApiKey, provider);
+  if (!directOptions && typeof createSession !== 'function') throw new Error('The interpreter backend is not configured.');
   const mediaDevices = navigator.mediaDevices;
   if (globalThis.isSecureContext === false || typeof WebSocket !== 'function'
       || typeof mediaDevices?.[source === 'mic' ? 'getUserMedia' : 'getDisplayMedia'] !== 'function') {
@@ -237,14 +257,19 @@ export async function startInterpreterAudio({
           }
         };
       }
-      const session = await createSession({ provider, sample_rate: audioContext?.sampleRate ?? 16000 });
-      if (stopped) return;
-      const options = sessionOptions(session, provider);
+      let options = directOptions;
+      if (!options) {
+        const session = await createSession({ provider, sample_rate: audioContext?.sampleRate ?? 16000 });
+        if (stopped) return;
+        options = sessionOptions(session, provider);
+      }
       try { socket = new WebSocket(options.url, options.protocols); }
       catch { throw new Error('Could not open the transcription connection. Check your browser and connection, then try again.'); }
       socket.binaryType = 'arraybuffer';
       socket.onmessage = handleMessage;
-      socket.onerror = () => fail('Could not connect to the transcription provider. Check your connection and backend configuration.');
+      socket.onerror = () => fail(directOptions
+        ? 'Could not connect to Deepgram. Check the supplied key, account permissions, billing, and your connection.'
+        : 'Could not connect to the transcription provider. Check your connection and backend configuration.');
       socket.onclose = (event) => {
         if (!started || event.code !== 1000) fail('The transcription connection closed. Check your connection and restart.');
         else finish(null, true);

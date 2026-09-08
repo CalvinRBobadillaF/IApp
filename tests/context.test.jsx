@@ -7,6 +7,7 @@ import { sendPrompt } from '../src/services/router.js';
 import { getModelCatalog } from '../src/services/apiClient.js';
 import { FALLBACK_CATALOG } from '../src/services/modelCatalog.js';
 import { STORAGE_KEYS } from '../src/services/chatState.js';
+import { DEEPGRAM_LOCAL_KEY } from '../src/services/interpreterCredentials.js';
 
 vi.mock('../src/services/router.js', () => ({ sendPrompt: vi.fn() }));
 vi.mock('../src/services/apiClient.js', () => ({ getModelCatalog: vi.fn() }));
@@ -33,6 +34,14 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('conversation and privacy boundaries', () => {
+  it('Clear IApp data removes an opted-in Interpreter key without touching unrelated site data', async () => {
+    const { result } = await setup();
+    localStorage.setItem(DEEPGRAM_LOCAL_KEY, 'test-key');
+    localStorage.setItem('unrelated', 'keep');
+    act(() => result.current.resetStorage());
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBeNull();
+    expect(localStorage.getItem('unrelated')).toBe('keep');
+  });
   it('creates the first normal turn atomically and sends raw code plus paired context on follow-up', async () => {
     const { result } = await setup({ normal: true });
     const code = 'Review:\n```js\nconst n = 1;\n```';

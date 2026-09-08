@@ -262,6 +262,129 @@ describe('browser capture startup', () => {
   });
 });
 
+describe('opt-in direct Deepgram key compatibility', () => {
+  const directKey = 'temporary-browser-test-key';
+
+  it('bypasses the backend and authenticates only in the fixed Deepgram socket subprotocol', async () => {
+    const storage = vi.spyOn(Storage.prototype, 'setItem');
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    const { socket, options, handle } = await connected({ deepgramApiKey: `  ${directKey}  ` });
+    expect(options.createSession).not.toHaveBeenCalled();
+    expect(socket.protocols).toEqual(['token', directKey]);
+    const url = new URL(socket.url);
+    expect(url.origin).toBe('wss://api.deepgram.com');
+    expect(url.pathname).toBe('/v1/listen');
+    expect(url.username).toBe('');
+    expect(url.password).toBe('');
+    expect(url.hash).toBe('');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      model: 'nova-3', language: 'multi', smart_format: 'true',
+      punctuate: 'true', numerals: 'true', interim_results: 'true',
+      filler_words: 'false', endpointing: '300', utterance_end_ms: '1200',
+      no_delay: 'true', vad_events: 'true', diarize: 'false', mip_opt_out: 'true',
+    });
+    expect(socket.url).not.toContain(directKey);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(storage).not.toHaveBeenCalled();
+    handle.stop();
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+  });
+
+  it('does not require a backend callback and preserves the tab-capture user gesture', async () => {
+    const pending = start({ source: 'tab', deepgramApiKey: directKey, createSession: undefined });
+    expect(media.getDisplayMedia).toHaveBeenCalledOnce();
+    expect(FakeSocket.instances).toHaveLength(0);
+    await flush();
+    FakeSocket.instances[0].open();
+    const handle = await pending.promise;
+    handle.stop();
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+  });
+
+  it.each([null, 123, '', '   ', 'Token secret', 'secret\nkey', '"secret"', 'secret,key', 'x'.repeat(8193)])(
+    'rejects invalid direct credential case %# before capture without disclosing it', async (deepgramApiKey) => {
+      const pending = start({ deepgramApiKey });
+      await expect(pending.promise).rejects.toThrow('Enter a valid raw Deepgram API key');
+      expect(media.getUserMedia).not.toHaveBeenCalled();
+      expect(pending.options.createSession).not.toHaveBeenCalled();
+      expect(FakeSocket.instances).toHaveLength(0);
+    },
+  );
+
+  it('never sends a Deepgram key to Gladia', async () => {
+    const pending = start({ provider: 'gladia', deepgramApiKey: directKey });
+    await expect(pending.promise).rejects.toThrow('only be used for English/Spanish');
+    expect(media.getUserMedia).not.toHaveBeenCalled();
+    expect(FakeAudioContext.instances).toHaveLength(0);
+    expect(pending.options.createSession).not.toHaveBeenCalled();
+  });
+
+  it('keeps server-issued Deepgram sessions restricted to bearer tokens', async () => {
+    const pending = start({ createSession: vi.fn(async () => ({ ...sessions.deepgram, protocols: ['token', directKey] })) });
+    await expect(pending.promise).rejects.toThrow('invalid transcription session');
+    expect(FakeSocket.instances).toHaveLength(0);
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+  });
+
+  it('releases a direct-mode permission result arriving after cancellation', async () => {
+    const capture = deferred();
+    media.getUserMedia.mockReturnValue(capture.promise);
+    const pending = start({ deepgramApiKey: directKey });
+    pending.controller.abort();
+    await expect(pending.promise).rejects.toHaveProperty('name', 'AbortError');
+    capture.resolve(stream);
+    await flush();
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+    expect(pending.options.createSession).not.toHaveBeenCalled();
+    expect(FakeSocket.instances).toHaveLength(0);
+  });
+
+  it('closes a cancelled direct socket and cannot start recording from a late open', async () => {
+    const pending = start({ deepgramApiKey: directKey });
+    await flush();
+    const socket = FakeSocket.instances[0];
+    const lateOpen = socket.onopen;
+    pending.controller.abort();
+    await expect(pending.promise).rejects.toHaveProperty('name', 'AbortError');
+    lateOpen();
+    expect(FakeRecorder.instances).toHaveLength(0);
+    expect(socket.close).toHaveBeenCalledOnce();
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+  });
+
+  it('sanitizes constructor failures that contain the supplied key', async () => {
+    vi.stubGlobal('WebSocket', class {
+      constructor() { throw new Error(`Rejected ${directKey}`); }
+    });
+    const pending = start({ deepgramApiKey: directKey });
+    await expect(pending.promise).rejects.toThrow('Could not open the transcription connection');
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+  });
+
+  it('reports connection failure without echoing the key or reverting to server auth', async () => {
+    const pending = start({ deepgramApiKey: directKey });
+    await flush();
+    const socket = FakeSocket.instances[0];
+    socket.onerror({ message: directKey });
+    await expect(pending.promise).rejects.toThrow('Could not connect to Deepgram. Check the supplied key, account permissions, billing, and your connection.');
+    expect(pending.options.createSession).not.toHaveBeenCalled();
+    expect(FakeRecorder.instances).toHaveLength(0);
+    expect(socket.close).toHaveBeenCalledOnce();
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+  });
+
+  it('releases an established direct session after a provider error without exposing the key', async () => {
+    const { socket, recorder, options } = await connected({ deepgramApiKey: directKey });
+    socket.message({ type: 'Error', description: directKey });
+    expect(options.onError).toHaveBeenCalledWith('The transcription provider could not process this session. Check its configuration and try again.');
+    expect(options.onEnded).toHaveBeenCalledOnce();
+    expect(recorder.stop).toHaveBeenCalledOnce();
+    expect(socket.close).toHaveBeenCalledOnce();
+    expect(stream.tracks[0].stop).toHaveBeenCalledOnce();
+  });
+});
+
 describe('cancellation and failure cleanup', () => {
   it('does not request permission if already aborted', async () => {
     const controller = new AbortController();
