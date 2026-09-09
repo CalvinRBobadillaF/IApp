@@ -241,7 +241,7 @@ describe('Transcript, translation, and privacy boundaries', () => {
     await start(result);
     act(() => {
       for (let index = 0; index < MAX_UTTERANCES + 2; index++) audio().onFinal({ text: `Turn ${index}.`, lang: 'en', speechFinal: true });
-      audio().onFinal({ text: 'Ignore', lang: 'fr' });
+      audio().onFinal({ text: 'Ignore', lang: 'xx' });
       audio().onFinal({ text: 'x'.repeat(5001), lang: 'en' });
     });
     expect(result.current.utterances).toHaveLength(MAX_UTTERANCES);
@@ -273,6 +273,39 @@ describe('Transcript, translation, and privacy boundaries', () => {
 });
 
 describe('Interpreter pure rules', () => {
+  it('explains language support mismatches before capture, while allowing direct subtitles', async () => {
+    getInterpreterCapabilities.mockResolvedValue({ ...configured, languages: ['en', 'es', 'ht'] });
+    const { result } = await setup();
+    act(() => result.current.setRecognitionLanguage('fr'));
+    expect(result.current.canStart).toBe(false);
+    expect(result.current.configurationNotice).toMatch(/2.2.0/);
+    await start(result);
+    expect(startInterpreterAudio).not.toHaveBeenCalled();
+    act(() => { result.current.setCredentialMode('local'); result.current.saveLocalKey('fake-key'); result.current.setSubtitleOnly(true); });
+    expect(result.current.canStart).toBe(true);
+  });
+  it('preserves auto-detected new-language speech when an older backend cannot translate it', async () => {
+    getInterpreterCapabilities.mockResolvedValue({ ...configured, languages: ['en', 'es', 'ht'] });
+    const { result } = await setup();
+    await start(result);
+    await final('Bonjour.', 'fr');
+    expect(result.current.utterances[0]).toMatchObject({ text: 'Bonjour.', failed: true, translating: false });
+    expect(result.current.error).toMatch(/2.2.0/);
+    expect(translateInterpreterText).not.toHaveBeenCalled();
+  });
+  it.each(['fr', 'de', 'it', 'pt'])('routes %s speech to an explicit translation target and locks language changes during capture', async language => {
+    const { result } = await setup();
+    act(() => { result.current.setRecognitionLanguage(language); result.current.setTranslationLanguage('es'); });
+    await start(result);
+    expect(audio().language).toBe(language);
+    await audio().createSession({ provider: 'deepgram' });
+    expect(createInterpreterSession.mock.calls[0][0].language).toBe(language);
+    await final('Example final speech.', language);
+    expect(translateInterpreterText.mock.calls[0][0]).toMatchObject({ from: language, to: 'es' });
+    act(() => { result.current.setRecognitionLanguage('en'); result.current.setTranslationLanguage('en'); });
+    expect(result.current.recognitionLanguage).toBe(language);
+    expect(result.current.translationLanguage).toBe('es');
+  });
   it('has explicit target-language fallbacks', () => {
     expect(targetLanguage('ht', true)).toBe('en');
     expect(targetLanguage('ht', false, 'es')).toBe('es');

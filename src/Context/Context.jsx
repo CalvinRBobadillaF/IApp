@@ -6,7 +6,7 @@ import { FALLBACK_CATALOG, initialModels, MODEL_STORAGE } from '../services/mode
 import { attachmentPayload, buildHistory, chatsReducer, emptyChats, initialSettings, normalizeChats,
   PROVIDERS, readStored, serializableChats, STORAGE_KEYS } from '../services/chatState.js';
 import { MAX_FILES, MAX_TOTAL_BYTES, readAttachment, validateFile } from '../services/attachments.js';
-import { DEEPGRAM_LOCAL_KEY } from '../services/interpreterCredentials.js';
+import { DEEPGRAM_LOCAL_KEY, removeSavedDeepgramKey } from '../services/interpreterCredentials.js';
 
 export default function ContextProvider({ children }) {
   const [settings, setSettings] = useState(initialSettings);
@@ -261,6 +261,10 @@ export default function ContextProvider({ children }) {
     setSignedIn(true);
   };
   const resetStorage = () => {
+    if (!removeSavedDeepgramKey()) {
+      setStorageWarning('IApp could not remove the remembered Interpreter key. Clear this site’s data in your browser or revoke the key in Deepgram before leaving this device. No reset was performed.');
+      return;
+    }
     clearHistory();
     changeSection('chat');
     for (const key of ['User', ...Object.values(MODEL_STORAGE), 'ModelFeature', 'currentChatId',
@@ -293,6 +297,16 @@ export default function ContextProvider({ children }) {
     changeSection(section);
   };
 
+  const openChatDraft = text => {
+    if (typeof text !== 'string' || !text.trim() || text.length > 100_000) return false;
+    if ((userPrompt.trim() || attachments.length || fileReadRef.current.busy) && !window.confirm('Replace your unsent Chat draft and attachments with this Interpreter request? Existing chat messages will be kept.')) return false;
+    newChat();
+    setUserPrompt(text);
+    setOpenSidebar(false);
+    setOpenModal(false);
+    return true;
+  };
+
   return <Context.Provider value={{
     chats, currentChat, currentChatId, loadChat, newChat, deleteChat, clearHistory,
     onSent, userPrompt, setUserPrompt, loading: Boolean(pending), pending, cancelRequest,
@@ -303,6 +317,6 @@ export default function ContextProvider({ children }) {
     modelFeature, setModelFeature, selectedModels, setSelectedModel, modelCatalog,
     openSidebar, setOpenSidebar, openModal, setOpenModal, models, setModels,
     userName, setUserName, signedIn, completeLogin, deleteStorage, handleDelete, resetStorage,
-    activeSection, setActiveSection,
+    activeSection, setActiveSection, openChatDraft,
   }}>{children}</Context.Provider>;
 }

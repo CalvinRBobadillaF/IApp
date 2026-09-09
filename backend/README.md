@@ -1,6 +1,6 @@
 # IApp API
 
-FastAPI serves text chat, inline file analysis, image generation, and the merged Interpreter tool for the React frontend. All permanent provider credentials stay on the server. Requires Python 3.11 or newer; the Docker image uses 3.12.
+FastAPI serves text chat, inline file analysis, image generation, and the merged Interpreter tool for the React frontend. All server credentials stay on the server. The optional client-side Deepgram fallback uses a user-supplied key directly and never submits it to this API. Requires Python 3.11 or newer; the Docker image uses 3.12.
 
 ## Local setup
 
@@ -76,9 +76,9 @@ Use a Deepgram key with at least **Member** permissions so `/v1/auth/grant` can 
 
 | Interpreter operation | Server environment variable |
 | --- | --- |
-| Transcribe English/Spanish | `DEEPGRAM_API_KEY` |
+| Transcribe English/Spanish/French/German/Italian/Portuguese | `DEEPGRAM_API_KEY` |
 | Transcribe Haitian Creole | `GLADIA_API_KEY` |
-| Translate English ↔ Spanish | `DEEPL_API_KEY` |
+| Translate between non-Kreyòl languages | `DEEPL_API_KEY` |
 | Translate to/from Haitian Creole | `GOOGLE_TRANSLATE_API_KEY` |
 
 DeepL requires an API subscription/key; access to its consumer translator does not configure the API. Subtitles-only mode needs the corresponding transcription key but no translation key. For example, English speech translated into Haitian Creole needs **both** Deepgram and Google, while Haitian Creole speech translated into English needs **both** Gladia and Google.
@@ -94,7 +94,7 @@ Invoke-RestMethod https://iapp-iw24.onrender.com/api/v1/health
 Invoke-RestMethod https://iapp-iw24.onrender.com/api/v1/interpreter/capabilities | ConvertTo-Json -Depth 3
 ```
 
-Replace the host if your service URL differs. The second command must return `languages`, `transcription`, and `translation`, not `Not Found`. The deployed `/docs` or `/openapi.json` should show IApp API **2.1.0** and all three `/api/v1/interpreter/` routes. If a capability is `false`, add its key to this same Render service and redeploy. Then choose **Tools → Interpreter → Recheck availability** in the frontend. Only after these checks should you test a short microphone session; stop listening when done. If the route exists but a provider call fails, use the safe response message and `X-Request-ID` to find its operation, provider, and upstream HTTP status in the Render logs—do not share API keys or raw provider responses.
+Replace the host if your service URL differs. The second command must return `languages`, `transcription`, and `translation`, not `Not Found`. The deployed `/docs` or `/openapi.json` should show IApp API **2.2.0** and all three `/api/v1/interpreter/` routes. If a capability is `false`, add its key to this same Render service and redeploy. Then choose **Tools → Interpreter → Recheck availability** in the frontend. Only after these checks should you test a short microphone session; stop listening when done. If the route exists but a provider call fails, use the safe response message and `X-Request-ID` to find its operation, provider, and upstream HTTP status in the Render logs—do not share API keys or raw provider responses.
 
 ## Request contract and capabilities
 
@@ -131,11 +131,15 @@ OpenAI Responses requests always use `store=False`. Gemini `generateContent` req
 
 ## Interpreter API and privacy
 
-The merge preserves the original supported languages and provider selection:
+API **2.2.0** adds French (`fr`), German (`de`), Italian (`it`), and Portuguese (`pt`) to English, Spanish, and Haitian Creole. Deepgram sessions accept an optional `language` field: `multi` (default), `en`, `es`, `fr`, `de`, `it`, or `pt`. Pin a known speech language to reduce detection mistakes. Gladia remains dedicated to Haitian Creole. Translation accepts all seven language codes; pairs involving `ht` use Google, all other distinct pairs use DeepL. DeepL English targets use `EN-US`, Portuguese targets use `PT-BR`, and other targets use their uppercase language code. Same-language requests return the original without a paid provider request. [Deepgram model/language support](https://developers.deepgram.com/docs/models-languages-overview/), [DeepL language support](https://developers.deepl.com/docs/getting-started/supported-languages).
 
-- English/Spanish speech: Deepgram `nova-3`, multilingual recognition. The browser filters recognized languages to English and Spanish.
+Deploy this backend before publishing the expanded-language frontend. A previous backend can still handle the original three languages but cannot process the new translation pairs. `/api/v1/interpreter/capabilities` now advertises all seven codes. The client-only direct Deepgram fallback does not change API authentication, accept customer keys, or make server credentials public. It bypasses `/session` only for Deepgram; translation and Gladia requests continue using this service. See the [temporary-key safety and usage instructions](../README.md#temporary-deepgram-key-fallback).
+
+The merge preserves the original providers and adds supported languages:
+
+- English, Spanish, French, German, Italian, and Portuguese speech: Deepgram `nova-3`, multilingual recognition or a pinned speech language. The browser filters automatic results to these supported languages.
 - Haitian Creole speech: Gladia `solaria-1`, explicitly configured for `ht`; raw mono PCM16 at the browser's actual audio sample rate.
-- English ↔ Spanish translation: DeepL. Any pair involving Haitian Creole: Google Cloud Translation v2.
+- Translation between the six non-Kreyòl languages: DeepL. Any pair involving Haitian Creole: Google Cloud Translation v2.
 
 `GET /api/v1/interpreter/capabilities` returns `languages`, `transcription` (`deepgram`, `gladia` booleans), and `translation` (`deepl`, `google` booleans).
 
@@ -156,7 +160,7 @@ The merge preserves the original supported languages and provider selection:
 
 It returns `{provider, url, protocols, expires_in?}`. Deepgram sessions return a 30-second temporary JWT in WebSocket subprotocols `['bearer', token]`; expiry applies to opening the connection, not its duration. The token has Deepgram's inference/usage permissions, not management permissions, and is **not** restricted to the URL settings supplied by this backend. Gladia returns its temporary, validated `wss://*.gladia.io` session URL. Never persist or log either credential. Audio then streams directly from the browser to the selected provider; it does not pass through this FastAPI service. Use [Deepgram's temporary-token guide](https://developers.deepgram.com/guides/fundamentals/token-based-authentication), [the official browser-auth implementation](https://github.com/deepgram/deepgram-js-sdk/blob/main/src/CustomClient.ts), and [Gladia's live session API](https://docs.gladia.io/api-reference/v2/live/init) for the upstream contracts.
 
-`POST /api/v1/interpreter/translate` accepts `{text, source_lang, target_lang, privacy_mode}` and returns `{translated_text, provider}`. Language codes are `en`, `es`, or `ht`. Each request contains only the current text, never a transcript history or glossary. Identical source and destination languages return the original text with `provider: "identity"`, without a paid call. Identical provider output is also valid for names, numbers, and shared words; it is not retried. Google HTML entities are decoded into plain text. Credentials use headers, not URL query parameters. See [DeepL translation](https://developers.deepl.com/api-reference/translate/request-translation) and [Google's header-based authentication example](https://docs.cloud.google.com/docs/authentication/rest#api-keys).
+`POST /api/v1/interpreter/translate` accepts `{text, source_lang, target_lang, privacy_mode}` and returns `{translated_text, provider}`. Language codes are `en`, `es`, `ht`, `fr`, `de`, `it`, and `pt`. Each request contains only the current text, never a transcript history or glossary. Identical source and destination languages return the original text with `provider: "identity"`, without a paid call. Identical provider output is also valid for names, numbers, and shared words; it is not retried. Google HTML entities are decoded into plain text. Credentials use headers, not URL query parameters. See [DeepL translation](https://developers.deepl.com/api-reference/translate/request-translation) and [Google's header-based authentication example](https://docs.cloud.google.com/docs/authentication/rest#api-keys).
 
 Interpreter limits: 5,000 input characters per translation; 20,000 output characters; 128 KiB HTTP bodies before JSON parsing; 100 vocabulary entries and 100 spelling entries, at most 20 pronunciations/variants per entry, 160 characters per term, and 20,000 combined glossary characters. Gladia accepts actual sample rates 8000, 16000, 32000, 44100, or 48000. Four interpreter HTTP requests may run concurrently per worker, with a 20-second provider timeout and no automatic retries. This cap covers session creation and translations, **not the number or duration of direct audio streams**.
 

@@ -20,7 +20,7 @@ logger = logging.getLogger("iapp.interpreter")
 request_slots = asyncio.Semaphore(4)
 TIMEOUT_SECONDS = 20
 MAX_INTERPRETER_BODY_BYTES = 128 * 1024
-Language = Literal["en", "es", "ht"]
+Language = Literal["en", "es", "ht", "fr", "de", "it", "pt"]
 SpeechProvider = Literal["deepgram", "gladia"]
 Term = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160, pattern=r"^[^\x00-\x1f\x7f]+$")]
 
@@ -54,6 +54,7 @@ class Glossary(BaseModel):
 
 class SessionRequest(BaseModel):
     provider: SpeechProvider
+    language: Literal["multi", "en", "es", "fr", "de", "it", "pt"] = "multi"
     sample_rate: Literal[8000, 16000, 32000, 44100, 48000] = 16000
     privacy_mode: StrictBool = True
     glossary: Glossary | None = None
@@ -96,7 +97,7 @@ class TranslationResponse(BaseModel):
 def capabilities() -> dict:
     configured = lambda name: bool(os.getenv(name, "").strip())
     return {
-        "languages": ["en", "es", "ht"],
+        "languages": ["en", "es", "ht", "fr", "de", "it", "pt"],
         "transcription": {"deepgram": configured("DEEPGRAM_API_KEY"), "gladia": configured("GLADIA_API_KEY")},
         "translation": {"deepl": configured("DEEPL_API_KEY"), "google": configured("GOOGLE_TRANSLATE_API_KEY")},
     }
@@ -185,7 +186,7 @@ async def create_session(request: SessionRequest) -> SessionResponse:
         if expires is not None and (type(expires) not in (int, float) or not 1 <= expires <= 60):
             raise ValueError("Invalid temporary session lifetime")
         params = {
-            "model": "nova-3", "language": "multi", "smart_format": "true",
+            "model": "nova-3", "language": request.language, "smart_format": "true",
             "punctuate": "true", "numerals": "true", "interim_results": "true",
             "filler_words": "false", "endpointing": "300", "utterance_end_ms": "1200",
             "no_delay": "true", "vad_events": "true", "diarize": "false", "mip_opt_out": "true",
@@ -233,7 +234,8 @@ async def translate_text(request: TranslationRequest) -> TranslationResponse:
         if url not in {"https://api-free.deepl.com/v2/translate", "https://api.deepl.com/v2/translate"}:
             raise HTTPException(503, "DEEPL_API_URL must be the official DeepL Free or Pro translation endpoint.")
         headers = {"Authorization": f"DeepL-Auth-Key {key}"}
-        body = {"text": [request.text], "source_lang": request.source_lang.upper(), "target_lang": "EN-US" if request.target_lang == "en" else "ES"}
+        target = {"en": "EN-US", "pt": "PT-BR"}.get(request.target_lang, request.target_lang.upper())
+        body = {"text": [request.text], "source_lang": request.source_lang.upper(), "target_lang": target}
     async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS, follow_redirects=False) as client:
         response = await client.post(url, headers=headers, json=body)
         response.raise_for_status()

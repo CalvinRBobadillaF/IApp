@@ -34,6 +34,16 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('conversation and privacy boundaries', () => {
+  it('does not silently finish Clear IApp data if deleting a remembered credential fails', async () => {
+    const { result } = await setup();
+    act(() => result.current.completeLogin('Test user'));
+    localStorage.setItem(DEEPGRAM_LOCAL_KEY, 'fake-key');
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('Denied'); });
+    act(() => result.current.resetStorage());
+    expect(result.current.signedIn).toBe(true);
+    expect(result.current.storageWarning).toMatch(/No reset was performed/);
+    expect(localStorage.getItem(DEEPGRAM_LOCAL_KEY)).toBe('fake-key');
+  });
   it('Clear IApp data removes an opted-in Interpreter key without touching unrelated site data', async () => {
     const { result } = await setup();
     localStorage.setItem(DEEPGRAM_LOCAL_KEY, 'test-key');
@@ -108,6 +118,29 @@ describe('conversation and privacy boundaries', () => {
 });
 
 describe('request lifecycle', () => {
+  it('prepares a new AI review draft without sending it and preserves the earlier chat', async () => {
+    const { result } = await setup();
+    await send(result, 'Earlier conversation');
+    const previousId = result.current.currentChatId;
+    sendPrompt.mockClear();
+    act(() => result.current.setActiveSection('interpreter'));
+    act(() => result.current.openChatDraft('Review this transcript: Bonjour.'));
+    expect(result.current.activeSection).toBe('chat');
+    expect(result.current.userPrompt).toContain('Bonjour.');
+    expect(result.current.currentChatId).not.toBe(previousId);
+    expect(result.current.chats.some(chat => chat.id === previousId)).toBe(true);
+    expect(sendPrompt).not.toHaveBeenCalled();
+  });
+  it('does not overwrite an unsent draft when replacement is declined', async () => {
+    const { result } = await setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    act(() => { result.current.setUserPrompt('Keep my draft'); result.current.setActiveSection('interpreter'); });
+    let changed;
+    act(() => { changed = result.current.openChatDraft('Replacement transcript'); });
+    expect(changed).toBe(false);
+    expect(result.current.userPrompt).toBe('Keep my draft');
+    expect(result.current.activeSection).toBe('interpreter');
+  });
   it('preserves a chat draft and history across tool navigation', async () => {
     const { result } = await setup({ normal: true });
     await send(result, 'Keep this conversation');

@@ -75,7 +75,7 @@ class RequestLimitsMiddleware:
         await self.app(scope, replay, no_cache_send)
 
 
-app = FastAPI(title="IApp API", version="2.1.0")
+app = FastAPI(title="IApp API", version="2.2.0")
 app.include_router(interpreter_router)
 app.add_middleware(RequestLimitsMiddleware)
 app.add_middleware(

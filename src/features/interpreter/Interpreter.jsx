@@ -5,9 +5,12 @@ import '../../components/Chat/Chat.css';
 import useInterpreter from './useInterpreter.js';
 import GlossaryEditor from './GlossaryEditor.jsx';
 import DeepgramKeySettings from './DeepgramKeySettings.jsx';
+import SentenceSearch from './SentenceSearch.jsx';
+import { LANGUAGES, SPEECH_LANGUAGES } from './languages.js';
+import { downloadTranscript, transcriptReviewDraft } from './transcript.js';
 import './Interpreter.css';
 
-const LANGUAGE_NAMES = { en: 'English', es: 'Spanish', ht: 'Haitian Kreyòl' };
+const LANGUAGE_NAMES = LANGUAGES;
 const EMPTY_UTTERANCES = [];
 const labelForLanguage = language => LANGUAGE_NAMES[language] || 'Speech';
 const errorText = error => typeof error === 'string' ? error : error?.message || 'An unexpected error occurred.';
@@ -25,7 +28,7 @@ function SpeechTime({ timestamp }) {
   return <time dateTime={date.toISOString()}>{date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>;
 }
 
-const Utterance = memo(function Utterance({ utterance, subtitleOnly, retry }) {
+const Utterance = memo(function Utterance({ utterance, subtitleOnly, retry, onSearch, searchDisabled }) {
   const { id, text, lang, targetLang, translation, translating, failed, timestamp } = utterance;
   return (
     <article className={`interpreter-turn ${subtitleOnly ? 'is-subtitle-only' : ''}`} aria-label={`${labelForLanguage(lang)} speech`}>
@@ -37,7 +40,7 @@ const Utterance = memo(function Utterance({ utterance, subtitleOnly, retry }) {
         <div className="interpreter-turn-meta"><span className="interpreter-mobile-col">Translation · </span><span>{labelForLanguage(targetLang)}</span></div>
         {translating ? <p className="interpreter-muted" role="status">Translating…</p>
           : failed ? <div className="interpreter-retry"><p>Translation could not be completed.</p><button type="button" onClick={() => retry(id)} aria-label={`Retry translation: ${text}`}>Retry translation</button></div>
-            : translation ? <p lang={targetLang}>{translation}</p>
+            : translation ? <><p lang={targetLang}>{translation}</p><div className="interpreter-turn-actions"><button type="button" className="interpreter-secondary interpreter-sentence-action" disabled={searchDisabled} onClick={() => onSearch(id)} title={searchDisabled ? 'Stop listening before preparing a Chat draft' : 'Choose a complete sentence to explore in Chat'}><Icon name="chat" />Search with AI</button></div></>
               : <p className="interpreter-muted">No translation for this segment.</p>}
       </div>}
     </article>
@@ -45,7 +48,7 @@ const Utterance = memo(function Utterance({ utterance, subtitleOnly, retry }) {
 });
 
 export default function Interpreter({ onBack }) {
-  const { privacyMode, modelFeature, openSidebar, setOpenSidebar, setOpenModal } = useContext(Context);
+  const { privacyMode, modelFeature, openSidebar, setOpenSidebar, setOpenModal, openChatDraft, storageWarning } = useContext(Context);
   const {
     status, source, setSource, captureKreyol, setCaptureKreyol, htMode, setHtMode,
     subtitleOnly, setSubtitleOnly, utterances = EMPTY_UTTERANCES, interimText, interimLang,
@@ -54,9 +57,13 @@ export default function Interpreter({ onBack }) {
     credentialMode = 'server', setCredentialMode, localKeyConfigured = false,
     localKeyRemembered = false, localKeyStorageError = '', saveLocalKey, removeLocalKey,
     backendRequired = true,
+    recognitionLanguage = 'multi', setRecognitionLanguage, translationLanguage = 'auto', setTranslationLanguage,
+    configurationNotice = '',
   } = useInterpreter({ privacyMode });
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const [showJump, setShowJump] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [searchId, setSearchId] = useState(null);
   const scrollRef = useRef(null);
   const followScroll = useRef(true);
   const busy = status !== 'idle';
@@ -64,12 +71,16 @@ export default function Interpreter({ onBack }) {
   const hasContent = utterances.length > 0 || Boolean(interimText);
   const usesLocalDeepgram = credentialMode === 'local' && !captureKreyol;
   const selectedTranscription = usesLocalDeepgram ? localKeyConfigured : captureKreyol ? capabilities?.transcription?.gladia : capabilities?.transcription?.deepgram;
-  const selectedTranslation = captureKreyol || htMode ? capabilities?.translation?.google : capabilities?.translation?.deepl;
+  const googleTranslation = captureKreyol || (translationLanguage === 'auto' ? htMode : translationLanguage === 'ht');
+  const selectedTranslation = googleTranslation ? capabilities?.translation?.google : capabilities?.translation?.deepl;
   const missingTranscription = (usesLocalDeepgram || capabilities) && !selectedTranscription;
   const missingTranslation = capabilities && !subtitleOnly && !selectedTranslation;
   const backendLoading = capabilitiesLoading && backendRequired;
-  const capabilityIssue = Boolean((capabilitiesError && backendRequired) || missingTranscription || missingTranslation);
+  const capabilityIssue = Boolean((capabilitiesError && backendRequired) || missingTranscription || missingTranslation || configurationNotice);
   const closeGlossary = useCallback(() => setGlossaryOpen(false), []);
+  const closeSearch = useCallback(() => setSearchId(null), []);
+  const openSearch = useCallback(id => setSearchId(id), []);
+  const searchUtterance = utterances.find(row => row.id === searchId && row.translation && !row.translating && !row.failed);
   const readyLabel = backendLoading ? 'Checking setup' : capabilityIssue ? 'Setup needed' : usesLocalDeepgram ? 'Ready · local key' : 'Ready';
 
   useEffect(() => {
@@ -78,7 +89,25 @@ export default function Interpreter({ onBack }) {
   }, [utterances, interimText, subtitleOnly]);
 
   const leave = () => { stop(); clear(); onBack(); };
-  const clearTranscript = () => { clear(); followScroll.current = true; setShowJump(false); };
+  const clearTranscript = () => { clear(); closeSearch(); setActionError(''); followScroll.current = true; setShowJump(false); };
+  const exportTranscript = () => {
+    try { downloadTranscript(utterances); setActionError(''); }
+    catch { setActionError('Could not download the transcript. Copy important text before leaving.'); }
+  };
+  const reviewWithAI = () => {
+    try {
+      const draft = transcriptReviewDraft(utterances);
+      if (!window.confirm('Prepare this transcript in a new Chat? You can review it before pressing Send; no LLM request is made now. Leaving Interpreter discards this tool session.')) return;
+      if (openChatDraft?.(draft) !== true) return;
+      stop(); clear();
+    } catch (caught) { setActionError(caught.message || 'Could not prepare the transcript for Chat.'); }
+  };
+  const prepareSentenceSearch = draft => {
+    if (busy || !searchUtterance) return;
+    if (!window.confirm('Open this selected text in a new Chat draft? Nothing is sent until you press Send. Leaving Interpreter discards the transcript; cancel and export it first if needed.')) return;
+    if (openChatDraft?.(draft) !== true) return;
+    stop(); clear(); closeSearch();
+  };
   const jumpToLatest = () => {
     const viewport = scrollRef.current;
     if (viewport) viewport.scrollTop = viewport.scrollHeight;
@@ -101,15 +130,25 @@ export default function Interpreter({ onBack }) {
       </header>
 
       <div className="interpreter-workspace">
+        {storageWarning && <p className="interpreter-banner interpreter-banner-warning" role="alert">{storageWarning}</p>}
         <section className="interpreter-controls" aria-label="Interpreter controls">
           <div className="interpreter-control-grid">
             <label className="interpreter-field">Audio source<select value={source} disabled={busy} onChange={event => setSource(event.target.value)}><option value="mic">Microphone</option><option value="tab">Browser tab</option></select></label>
-            <label className="interpreter-field">Who is speaking?<select value={captureKreyol ? 'ht' : 'en-es'} disabled={busy} onChange={event => setCaptureKreyol(event.target.value === 'ht')}><option value="en-es">English / Spanish</option><option value="ht">Haitian Kreyòl</option></select></label>
+            <label className="interpreter-field">Who is speaking?<select value={captureKreyol ? 'ht' : 'en-es'} disabled={busy} onChange={event => setCaptureKreyol(event.target.value === 'ht')}><option value="en-es">Multilingual speech (Deepgram)</option><option value="ht">Haitian Kreyòl</option></select></label>
             <label className="interpreter-field">Translation direction<select value={captureKreyol ? 'adaptive' : htMode ? 'ht' : 'en-es'} disabled={busy || captureKreyol || subtitleOnly} onChange={event => setHtMode(event.target.value === 'ht')}>
-              {captureKreyol ? <option value="adaptive">Kreyòl → last English / Spanish</option> : <><option value="en-es">English ↔ Spanish</option><option value="ht">English / Spanish → Kreyòl</option></>}
+              {captureKreyol ? <option value="adaptive">Kreyòl → last non-Kreyòl language</option> : <><option value="en-es">English ↔ Spanish; others → English</option><option value="ht">Supported languages → Kreyòl</option></>}
             </select></label>
           </div>
-          <p className="interpreter-mode-help">{captureKreyol ? 'Kreyòl is translated to the last English or Spanish language heard in this conversation, starting with English.' : 'English and Spanish are detected automatically. Stop first to switch to a Kreyòl speaker.'}{source === 'tab' && ' Select a browser tab and enable “Share tab audio” when prompted.'}</p>
+          <div className="interpreter-control-grid interpreter-language-grid">
+            <label className="interpreter-field">Speech language<select value={captureKreyol ? 'ht' : recognitionLanguage} disabled={busy || captureKreyol} onChange={event => setRecognitionLanguage?.(event.target.value)}>
+              {captureKreyol ? <option value="ht">Haitian Kreyòl</option> : <><option value="multi">Auto-detect supported languages</option>{SPEECH_LANGUAGES.map(code => <option value={code} key={code}>{LANGUAGES[code]}</option>)}</>}
+            </select></label>
+            <label className="interpreter-field">Translate into<select value={translationLanguage} disabled={busy || subtitleOnly} onChange={event => setTranslationLanguage?.(event.target.value)}>
+              <option value="auto">Use conversation direction above</option>{Object.entries(LANGUAGES).map(([code, name]) => <option value={code} key={code}>{name}{code === 'pt' ? ' (Brazil)' : ''}</option>)}
+            </select></label>
+          </div>
+          <p className="interpreter-mode-help">For a single-language speaker, choose their speech language to reduce detection mistakes. Auto supports English, Spanish, French, German, Italian, and Portuguese. Use the Kreyòl speaker option for Haitian Creole. Recognition may still make errors; verify names and numbers. An explicit translation target overrides the conversation direction above.</p>
+          <p className="interpreter-mode-help">{captureKreyol ? 'Without an explicit target, Kreyòl is translated to the last non-Kreyòl language heard in this conversation, starting with English.' : 'Stop first to switch speech languages or to a Kreyòl speaker.'}{source === 'tab' && ' Select a browser tab and enable “Share tab audio” when prompted.'}</p>
           <div className="interpreter-action-row">
             <div className="interpreter-options">
               <label className="interpreter-checkbox"><input type="checkbox" checked={subtitleOnly} disabled={busy} onChange={event => setSubtitleOnly(event.target.checked)} />Subtitles only</label>
@@ -127,14 +166,21 @@ export default function Interpreter({ onBack }) {
 
         {backendLoading && <p className="interpreter-banner" role="status">Checking interpreter configuration…</p>}
         {!backendLoading && capabilityIssue && <div className="interpreter-banner interpreter-banner-warning" role="alert">
+          {configurationNotice && !missingTranscription && !missingTranslation && !capabilitiesError && <p>{configurationNotice}</p>}
           {capabilitiesError && backendRequired && <p>{errorText(capabilitiesError)} Check that the updated IApp backend is deployed and reachable.</p>}
-          {missingTranscription && (usesLocalDeepgram ? <p>Add an individual Deepgram key under Deepgram credentials, or select Server key.</p> : <p>{captureKreyol ? 'Kreyòl speech needs Gladia.' : 'English / Spanish speech needs Deepgram.'} Set <code>{captureKreyol ? 'GLADIA_API_KEY' : 'DEEPGRAM_API_KEY'}</code> on the IApp backend, then recheck availability.</p>)}
-          {missingTranslation && <p>{captureKreyol || htMode ? 'Kreyòl translation needs Google Cloud Translation.' : 'English / Spanish translation needs DeepL.'} Set <code>{captureKreyol || htMode ? 'GOOGLE_TRANSLATE_API_KEY' : 'DEEPL_API_KEY'}</code> on the IApp backend, or use Subtitles only.</p>}
+          {missingTranscription && (usesLocalDeepgram ? <p>Add an individual Deepgram key under Deepgram credentials, or select Server key.</p> : <p>{captureKreyol ? 'Kreyòl speech needs Gladia.' : 'Multilingual speech needs Deepgram.'} Set <code>{captureKreyol ? 'GLADIA_API_KEY' : 'DEEPGRAM_API_KEY'}</code> on the IApp backend, then recheck availability.</p>)}
+          {missingTranslation && <p>{googleTranslation ? 'Kreyòl translation needs Google Cloud Translation.' : 'Translation between supported non-Kreyòl languages needs DeepL.'} Set <code>{googleTranslation ? 'GOOGLE_TRANSLATE_API_KEY' : 'DEEPL_API_KEY'}</code> on the IApp backend, or use Subtitles only.</p>}
           {backendRequired && <button type="button" className="interpreter-secondary" disabled={busy} onClick={reloadCapabilities}>Recheck availability</button>}
         </div>}
         {error && <div className="interpreter-banner interpreter-banner-error" role="alert"><p>{errorText(error)}</p><button type="button" className="chat-icon-button" aria-label="Dismiss interpreter error" onClick={dismissError}><Icon name="close" /></button></div>}
 
         <section className="interpreter-conversation" aria-label="Live interpretation">
+          <div className="interpreter-transcript-actions">
+            <button type="button" className="interpreter-secondary" disabled={!utterances.length || busy} onClick={exportTranscript}>Export transcript</button>
+            <button type="button" className="interpreter-secondary" disabled={!utterances.length || busy || !openChatDraft} onClick={reviewWithAI}>Review with AI</button>
+            <small>Stop first. Review the transcript or use Search with AI on a translation to explore one complete sentence. AI actions open editable drafts; nothing is sent automatically. Latest 300 segments retained.</small>
+          </div>
+          {actionError && <p className="interpreter-banner interpreter-banner-error" role="alert">{actionError}</p>}
           <div className={`interpreter-conversation-header ${subtitleOnly ? 'is-subtitle-only' : ''}`}>
             <h2>Original</h2>{!subtitleOnly && <h2>Translation</h2>}
             <button type="button" className="interpreter-clear" disabled={!hasContent || busy} onClick={clearTranscript} title={busy ? 'Stop listening before clearing the transcript' : 'Discard the transcript'}>Clear transcript</button>
@@ -152,7 +198,7 @@ export default function Interpreter({ onBack }) {
               {!busy && <p className="interpreter-empty-note">Your microphone and tab audio stay off until you start.</p>}
             </div>}
             <div role="log" aria-label="Final speech and translations" aria-live="polite" aria-relevant="additions text">
-              {utterances.map(utterance => <Utterance key={utterance.id} utterance={utterance} subtitleOnly={subtitleOnly} retry={retry} />)}
+              {utterances.map(utterance => <Utterance key={utterance.id} utterance={utterance} subtitleOnly={subtitleOnly} retry={retry} onSearch={openSearch} searchDisabled={busy || !openChatDraft} />)}
             </div>
             {interimText && <div className={`interpreter-turn interpreter-interim ${subtitleOnly ? 'is-subtitle-only' : ''}`} aria-label="Speech in progress">
               <div className="interpreter-speech"><div className="interpreter-turn-meta">{labelForLanguage(interimLang)} · In progress</div><p lang={interimLang}>{interimText}<span className="interpreter-cursor" aria-hidden="true" /></p></div>
@@ -165,6 +211,7 @@ export default function Interpreter({ onBack }) {
         <footer className="interpreter-footer"><Icon name="lock" /><p>{privacyMode ? 'Privacy mode excludes the custom glossary. ' : ''}IApp keeps this transcript in memory and does not save audio. Audio goes to the speech provider; {subtitleOnly ? 'Subtitles only does not send text for translation.' : 'completed text goes through IApp to the translation provider.'} Provider retention still applies. Leaving this tool stops capture and discards the transcript. An explicitly remembered Deepgram key stays on this device until removed, including in privacy mode.</p></footer>
       </div>
       {glossaryOpen && <GlossaryEditor glossary={glossary} setGlossary={setGlossary} privacyMode={privacyMode} busy={busy} onClose={closeGlossary} />}
+      {searchUtterance && <SentenceSearch key={searchUtterance.id} translation={searchUtterance.translation} language={searchUtterance.targetLang} provider={modelFeature} privacyMode={privacyMode} busy={busy} onClose={closeSearch} onPrepare={prepareSentenceSearch} />}
     </main>
   );
 }

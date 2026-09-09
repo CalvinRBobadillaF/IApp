@@ -12,12 +12,21 @@ function setup(overrides = {}) {
 }
 
 describe('Deepgram key settings', () => {
+  it('does not claim persistence when the key is usable but storage failed', () => {
+    setup({ credentialMode: 'local', localKeyStorageError: 'Saving failed. Session only.' });
+    fireEvent.change(screen.getByLabelText('Deepgram API key'), { target: { value: 'test-key' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /Remember key/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save key on this device' }));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByText('Saving failed. Session only.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove local key' })).toBeTruthy();
+  });
   it('defaults to the server without showing an API key field', () => {
     const { props } = setup();
-    expect(screen.getByLabelText('English / Spanish speech credentials').value).toBe('server');
+    expect(screen.getByLabelText('Deepgram speech credentials').value).toBe('server');
     expect(screen.queryByLabelText('Deepgram API key')).toBeNull();
     expect(props.setCredentialMode).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText('English / Spanish speech credentials'), { target: { value: 'local' } });
+    fireEvent.change(screen.getByLabelText('Deepgram speech credentials'), { target: { value: 'local' } });
     expect(props.setCredentialMode).toHaveBeenCalledWith('local');
   });
 
@@ -35,7 +44,7 @@ describe('Deepgram key settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Use for session' }));
     expect(props.saveLocalKey).toHaveBeenCalledWith('example-individual-key', { remember: false });
     expect(input.value).toBe('');
-    expect(screen.getByRole('status').textContent).toContain('access is checked when you start');
+    expect(screen.getByRole('status').textContent).toMatch(/access is checked when you start/i);
   });
 
   it('requires explicitly choosing localStorage and explains its limitations', () => {
@@ -80,13 +89,13 @@ describe('Deepgram key settings', () => {
     setup({ credentialMode: 'local' });
     const input = screen.getByLabelText('Deepgram API key');
     fireEvent.change(input, { target: { value: 'draft-key' } });
-    fireEvent.change(screen.getByLabelText('English / Spanish speech credentials'), { target: { value: 'server' } });
+    fireEvent.change(screen.getByLabelText('Deepgram speech credentials'), { target: { value: 'server' } });
     expect(input.value).toBe('');
   });
 
   it('disables credential mutations during capture', () => {
     setup({ credentialMode: 'local', busy: true, localKeyConfigured: true, localKeyRemembered: true });
-    expect(screen.getByLabelText('English / Spanish speech credentials').disabled).toBe(true);
+    expect(screen.getByLabelText('Deepgram speech credentials').disabled).toBe(true);
     expect(screen.getByLabelText('Deepgram API key').disabled).toBe(true);
     expect(screen.getByRole('checkbox', { name: /Remember key/ }).disabled).toBe(true);
     expect(screen.getByRole('button', { name: 'Use for session' }).disabled).toBe(true);

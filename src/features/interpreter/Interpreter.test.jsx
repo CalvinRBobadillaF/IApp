@@ -27,6 +27,93 @@ function setup(overrides = {}) {
 }
 
 describe('Interpreter workspace', () => {
+  it('searches one complete translated sentence without including other segments or sending on open', () => {
+    state.utterances = [
+      { id: 'one', lang: 'es', text: 'Original speech stays here', targetLang: 'en', translation: 'The meeting is tomorrow. Bring the full report.' },
+      { id: 'two', lang: 'es', text: 'Unrelated conversation', targetLang: 'en', translation: 'Do not include this row.' },
+    ];
+    const openChatDraft = vi.fn(() => true);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    setup({ openChatDraft });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Search with AI' })[0]);
+    expect(openChatDraft).not.toHaveBeenCalled();
+    expect(state.clear).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('Text to explore'), { target: { value: '1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open Chat draft' }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('discards the transcript'));
+    const draft = openChatDraft.mock.calls[0][0];
+    expect(draft).toContain('Bring the full report.');
+    for (const excluded of ['The meeting is tomorrow.', 'Original speech stays here', 'Unrelated conversation', 'Do not include this row.']) expect(draft).not.toContain(excluded);
+    expect(state.stop).toHaveBeenCalledOnce();
+    expect(state.clear).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it.each(['leave', 'replace'])('preserves transcript and preview when the %s confirmation is declined', stage => {
+    state.utterances = [{ id: 'one', lang: 'fr', text: 'Bonjour.', targetLang: 'en', translation: 'Hello.' }];
+    const openChatDraft = vi.fn(() => false);
+    vi.spyOn(window, 'confirm').mockReturnValue(stage !== 'leave');
+    setup({ openChatDraft });
+    fireEvent.click(screen.getByRole('button', { name: 'Search with AI' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Chat draft' }));
+    expect(openChatDraft).toHaveBeenCalledTimes(stage === 'leave' ? 0 : 1);
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(state.stop).not.toHaveBeenCalled();
+    expect(state.clear).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Close sentence search' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByText('Bonjour.')).toBeTruthy();
+  });
+
+  it('offers AI search only for completed translations and locks it during capture', () => {
+    Object.assign(state, { status: 'listening', utterances: [
+      { id: 'one', text: 'Hello', lang: 'en', targetLang: 'es', translation: 'Hola' },
+      { id: 'waiting', text: 'Waiting', lang: 'en', targetLang: 'es', translating: true },
+      { id: 'failed', text: 'Failed', lang: 'en', targetLang: 'es', failed: true },
+    ] });
+    setup({ openChatDraft: vi.fn() });
+    const buttons = screen.getAllByRole('button', { name: 'Search with AI' });
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].disabled).toBe(true);
+    fireEvent.click(buttons[0]);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('closes the sentence preview if the source transcript is cleared, including on privacy change', () => {
+    state.utterances = [{ id: 'one', text: 'Hello', lang: 'en', targetLang: 'es', translation: 'Hola' }];
+    const { rerender, context, onBack } = setup({ openChatDraft: vi.fn() });
+    fireEvent.click(screen.getByRole('button', { name: 'Search with AI' }));
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    state.utterances = [];
+    rerender(<Context.Provider value={{ ...context, privacyMode: true }}><Interpreter onBack={onBack} /></Context.Provider>);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByText('Hola')).toBeNull();
+  });
+
+  it('offers supported language pins and explicit translation targets', () => {
+    state.setRecognitionLanguage = vi.fn();
+    state.setTranslationLanguage = vi.fn();
+    setup();
+    fireEvent.change(screen.getByLabelText('Speech language'), { target: { value: 'fr' } });
+    fireEvent.change(screen.getByLabelText('Translate into'), { target: { value: 'de' } });
+    expect(state.setRecognitionLanguage).toHaveBeenCalledWith('fr');
+    expect(state.setTranslationLanguage).toHaveBeenCalledWith('de');
+  });
+  it('only prepares AI review after confirmation and preserves the transcript on cancel', () => {
+    state.utterances = [{ id: 'one', lang: 'fr', text: 'Bonjour.', targetLang: 'en', translation: 'Hello.' }];
+    const openChatDraft = vi.fn(() => true);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    setup({ openChatDraft });
+    fireEvent.click(screen.getByRole('button', { name: 'Review with AI' }));
+    expect(openChatDraft).not.toHaveBeenCalled();
+    expect(state.clear).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Review with AI' }));
+    expect(openChatDraft).toHaveBeenCalledWith(expect.stringContaining('Bonjour.'));
+    expect(state.stop).toHaveBeenCalledOnce();
+    expect(state.clear).toHaveBeenCalledOnce();
+    confirm.mockRestore();
+  });
   it.each(['Gemini', 'GPT', 'Claude'])('inherits the %s provider palette without starting audio', modelFeature => {
     const { container } = setup({ modelFeature });
     expect(container.querySelector(`.iapp-chat-${modelFeature.toLowerCase()}`)).toBeTruthy();

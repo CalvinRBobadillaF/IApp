@@ -5,7 +5,7 @@ import '../Chat/Chat.css';
 import './Tools.css';
 
 export default function Tools({ onOpenInterpreter }) {
-  const { modelFeature, openSidebar, setOpenSidebar, setOpenModal } = useContext(Context);
+  const { modelFeature, openSidebar, setOpenSidebar, setOpenModal, storageWarning } = useContext(Context);
   return (
     <main className={`iapp-chat iapp-chat-${modelFeature.toLowerCase()} iapp-tools`}>
       <header className="chat-header">
@@ -16,6 +16,7 @@ export default function Tools({ onOpenInterpreter }) {
         <button type="button" className="chat-icon-button" aria-label="Open settings" onClick={() => setOpenModal(true)}><Icon name="settings" /></button>
       </header>
       <div className="tools-content">
+        {storageWarning && <p role="alert">{storageWarning}</p>}
         <div className="tools-intro">
           <p className="tools-eyebrow">MORE WAYS TO WORK</p>
           <h2>A little help, in the moment.</h2>
@@ -25,7 +26,7 @@ export default function Tools({ onOpenInterpreter }) {
           <span className="tools-card-symbol" aria-hidden="true">Aa<span>↔</span></span>
           <span className="tools-card-copy">
             <span className="tools-card-title">Interpreter AI</span>
-            <span className="tools-card-description">Live transcription and translation for English, Spanish, and Haitian Kreyòl.</span>
+            <span className="tools-card-description">Live transcription and translation in seven languages, including English, Spanish, Haitian Kreyòl, French, German, Italian, and Portuguese.</span>
             <span className="tools-card-meta">Microphone or browser tab · Session only</span>
             <span className="tools-card-action">Open interpreter <Icon name="arrow" /></span>
           </span>

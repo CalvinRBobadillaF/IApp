@@ -8,7 +8,7 @@ const server = createServer(async (request, response) => {
   response.setHeader('Content-Type', 'application/json');
   response.setHeader('Cache-Control', 'no-store');
   if (request.method === 'GET' && request.url === '/api/v1/interpreter/capabilities') {
-    response.end(JSON.stringify({ languages: ['en', 'es', 'ht'],
+    response.end(JSON.stringify({ languages: ['en', 'es', 'ht', 'fr', 'de', 'it', 'pt'],
       transcription: { deepgram: false, gladia: false }, translation: { deepl: false, google: false } }));
     return;
   }

@@ -116,6 +116,20 @@ async function connected(overrides) {
   return { ...pending, socket, handle, recorder: FakeRecorder.instances.at(-1) };
 }
 
+describe('expanded speech languages', () => {
+  it.each(['fr', 'de', 'it', 'pt'])('uses pinned %s for monolingual results without detected-language metadata', async language => {
+    const { options, socket } = await connected({ language });
+    expect(options.createSession).toHaveBeenCalledWith(expect.objectContaining({ language }));
+    socket.message({ type: 'Results', is_final: true, channel: { alternatives: [{ transcript: 'Example speech', confidence: 0.9 }] } });
+    expect(options.onFinal).toHaveBeenCalledWith(expect.objectContaining({ lang: language, text: 'Example speech' }));
+  });
+  it('pins the requested language in direct-key mode without backend calls', async () => {
+    const { options, socket } = await connected({ language: 'fr', deepgramApiKey: 'test-only-key' });
+    expect(options.createSession).not.toHaveBeenCalled();
+    expect(new URL(socket.url).searchParams.get('language')).toBe('fr');
+  });
+});
+
 beforeEach(() => {
   stream = makeStream();
   media = { getUserMedia: vi.fn(async () => stream), getDisplayMedia: vi.fn(async () => stream) };
@@ -314,7 +328,7 @@ describe('opt-in direct Deepgram key compatibility', () => {
 
   it('never sends a Deepgram key to Gladia', async () => {
     const pending = start({ provider: 'gladia', deepgramApiKey: directKey });
-    await expect(pending.promise).rejects.toThrow('only be used for English/Spanish');
+    await expect(pending.promise).rejects.toThrow('only be used for transcription with Deepgram');
     expect(media.getUserMedia).not.toHaveBeenCalled();
     expect(FakeAudioContext.instances).toHaveLength(0);
     expect(pending.options.createSession).not.toHaveBeenCalled();
@@ -588,7 +602,7 @@ describe('transcription messages and Gladia PCM', () => {
     });
     socket.message(result(' Hello ', 'en-US', true));
     socket.message(result('Hola', 'es', false));
-    socket.message(result('Bonjour', 'fr', true));
+    socket.message(result('Ignore', 'xx', true));
     socket.message(result('uncertain', 'en', false, 0.3));
     socket.message('not json');
     socket.message(null);

@@ -66,7 +66,7 @@ def test_capabilities_are_configuration_only_without_credentials(monkeypatch):
     with TestClient(main.app) as client:
         response = client.get("/api/v1/interpreter/capabilities")
     assert response.status_code == 200
-    assert response.json() == {"languages": ["en", "es", "ht"], "transcription": {"deepgram": True, "gladia": False}, "translation": {"deepl": True, "google": False}}
+    assert response.json() == {"languages": ["en", "es", "ht", "fr", "de", "it", "pt"], "transcription": {"deepgram": True, "gladia": False}, "translation": {"deepl": True, "google": False}}
     assert SECRET not in response.text
     assert response.headers["cache-control"] == "no-store"
 
@@ -90,6 +90,37 @@ def test_deepgram_exposes_only_short_lived_bearer_token(monkeypatch):
     assert url.params["mip_opt_out"] == "true"
     assert "encoding" not in url.params  # Browser sends a MediaRecorder container.
     assert TOKEN not in str(url)
+
+
+@pytest.mark.parametrize("language", ["en", "es", "fr", "de", "it", "pt"])
+def test_explicit_speech_language_is_applied_to_deepgram_session(monkeypatch, language):
+    mock_http(monkeypatch, {"access_token": TOKEN, "expires_in": 30})
+    response = post("session", {"provider": "deepgram", "language": language})
+    assert response.status_code == 200
+    assert httpx.URL(response.json()["url"]).params["language"] == language
+
+
+@pytest.mark.parametrize("source,target,expected", [("fr", "de", "DE"), ("de", "it", "IT"), ("it", "fr", "FR"), ("en", "pt", "PT-BR"), ("pt", "en", "EN-US")])
+def test_expanded_deepl_language_pairs(monkeypatch, source, target, expected):
+    captured = mock_http(monkeypatch, {"translations": [{"text": "Translated test text"}]})
+    response = post("translate", translate_payload(source_lang=source, target_lang=target))
+    assert response.status_code == 200
+    body = json.loads(captured[0].content)
+    assert body["source_lang"] == source.upper()
+    assert body["target_lang"] == expected
+
+
+@pytest.mark.parametrize("language", ["fr", "de", "it", "pt"])
+def test_expanded_languages_can_translate_to_kreyol(monkeypatch, language):
+    captured = mock_http(monkeypatch, {"data": {"translations": [{"translatedText": "Bonjou"}]}})
+    response = post("translate", translate_payload(source_lang=language, target_lang="ht"))
+    assert response.status_code == 200
+    assert captured[0].url.host == "translation.googleapis.com"
+    assert json.loads(captured[0].content)["source"] == language
+
+
+def test_unsupported_speech_language_is_rejected_without_network():
+    assert post("session", {"provider": "deepgram", "language": "xx"}).status_code == 422
 
 
 @pytest.mark.parametrize("metadata,expected", [({}, None), ({"expires_in": None}, None), ({"expires_in": 30.0}, 30), ({"expires_in": 29.75}, 29)])
@@ -224,7 +255,7 @@ def test_empty_or_malformed_upstream_translation_is_safe_error(monkeypatch, text
 @pytest.mark.parametrize("path,payload", [
     ("translate", translate_payload(text="")), ("translate", translate_payload(text="   ")),
     ("translate", translate_payload(text="x" * 5001)), ("translate", translate_payload(text="private\u0000secret")),
-    ("translate", translate_payload(source_lang="fr")), ("translate", translate_payload(target_lang="xx")),
+    ("translate", translate_payload(source_lang="xx")), ("translate", translate_payload(target_lang="xx")),
     ("translate", translate_payload(privacy_mode="false")), ("session", {"provider": "other"}),
     ("session", {"provider": "gladia", "sample_rate": 22050}),
     ("session", {"provider": "gladia", "privacy_mode": False, "glossary": {"defaultIntensity": 2}}),

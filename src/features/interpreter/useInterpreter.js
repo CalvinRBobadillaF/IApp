@@ -1,22 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createInterpreterSession, getInterpreterCapabilities, translateInterpreterText } from './api.js';
 import { startInterpreterAudio } from './audioCapture.js';
+import { LANGUAGES, SPEECH_LANGUAGES } from './languages.js';
 import { DEEPGRAM_LOCAL_KEY, readDeepgramCredential, removeSavedDeepgramKey, validateDeepgramKey } from '../../services/interpreterCredentials.js';
 
 export const MAX_UTTERANCES = 300;
 export const emptyGlossary = () => ({ defaultIntensity: 0.4, vocabulary: [], spelling: [] });
-export function targetLanguage(source, htMode, lastNonHt = 'en') {
+export function targetLanguage(source, htMode, lastNonHt = 'en', translationLanguage = 'auto') {
+  if (translationLanguage !== 'auto') return translationLanguage;
   return source === 'ht' ? lastNonHt : htMode ? 'ht' : source === 'en' ? 'es' : 'en';
 }
-export function interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly, credentialMode = 'server', localKeyConfigured = false }) {
+export function interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly, credentialMode = 'server', localKeyConfigured = false, translationLanguage = 'auto', recognitionLanguage = 'multi' }) {
   const localSpeech = credentialMode === 'local' && !captureKreyol;
   if (localSpeech && !localKeyConfigured) return 'Enter your Deepgram key in Deepgram credentials, or switch back to server credentials.';
   if (localSpeech && subtitleOnly) return '';
   if (!capabilities) return 'Interpreter configuration is not available. Refresh its server status.';
+  if (Array.isArray(capabilities.languages)) {
+    const selectedSource = captureKreyol ? 'ht' : recognitionLanguage;
+    const unsupportedSource = selectedSource !== 'multi' && !capabilities.languages.includes(selectedSource);
+    const unsupportedTarget = translationLanguage !== 'auto' && !capabilities.languages.includes(translationLanguage);
+    if ((!localSpeech && unsupportedSource) || (!subtitleOnly && (unsupportedSource || unsupportedTarget))) {
+      return 'Deploy the updated IApp backend (2.2.0 or newer) to enable these languages, then recheck availability.';
+    }
+  }
   const speech = captureKreyol ? 'gladia' : 'deepgram';
   if (!localSpeech && !capabilities.transcription[speech]) return `Configure ${captureKreyol ? 'GLADIA_API_KEY' : 'DEEPGRAM_API_KEY'} on the IApp backend to transcribe this language.`;
   if (!subtitleOnly) {
-    const translation = captureKreyol || htMode ? 'google' : 'deepl';
+    const translation = captureKreyol || (translationLanguage === 'auto' ? htMode : translationLanguage === 'ht') ? 'google' : 'deepl';
     if (!capabilities.translation[translation]) return `Configure ${translation === 'google' ? 'GOOGLE_TRANSLATE_API_KEY' : 'DEEPL_API_KEY'} on the IApp backend, or choose Subtitles only.`;
   }
   return '';
@@ -61,6 +71,8 @@ export default function useInterpreter({ privacyMode = true } = {}) {
   const [status, setStatus] = useState('idle');
   const [source, changeSource] = useState('mic');
   const [captureKreyol, changeCaptureKreyol] = useState(false);
+  const [recognitionLanguage, changeRecognitionLanguage] = useState('multi');
+  const [translationLanguage, changeTranslationLanguage] = useState('auto');
   const [htMode, changeHtMode] = useState(true);
   const [subtitleOnly, changeSubtitleOnly] = useState(false);
   const [utterances, setUtterances] = useState([]);
@@ -177,6 +189,11 @@ export default function useInterpreter({ privacyMode = true } = {}) {
   const translateRow = useCallback(async row => {
     translations.current.get(row.id)?.controller.abort();
     translations.current.delete(row.id);
+    if (Array.isArray(capabilities?.languages) && (!capabilities.languages.includes(row.lang) || !capabilities.languages.includes(row.targetLang))) {
+      updateRows(rows => rows.map(item => item.id === row.id ? { ...item, translating: false, failed: true } : item));
+      setError('This transcript language needs the updated IApp backend (2.2.0 or newer). Original speech is retained; update the backend and retry.');
+      return;
+    }
     // Keep a slow provider from accumulating unbounded requests during live audio.
     if (translations.current.size >= 3) {
       updateRows(rows => rows.map(item => item.id === row.id ? { ...item, translating: false, failed: true } : item));
@@ -199,17 +216,17 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     } finally {
       if (translations.current.get(row.id) === job) translations.current.delete(row.id);
     }
-  }, [privacyMode, updateRows]);
+  }, [privacyMode, capabilities, updateRows]);
 
   const backendRequired = !(credentialMode === 'local' && !captureKreyol && subtitleOnly);
-  const unavailable = interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly, credentialMode, localKeyConfigured: Boolean(localCredential.key) });
+  const unavailable = interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly, credentialMode, recognitionLanguage, translationLanguage, localKeyConfigured: Boolean(localCredential.key) });
   const canStart = status === 'idle' && !(capabilitiesLoading && backendRequired) && !unavailable;
   const start = useCallback(async () => {
     if (runRef.current || !mounted.current) return;
     const localSpeech = credentialModeRef.current === 'local' && !captureKreyol;
     const credential = credentialRef.current;
     const blocked = interpreterAvailability(capabilities, { captureKreyol, htMode, subtitleOnly,
-      credentialMode: credentialModeRef.current, localKeyConfigured: Boolean(credential.key) });
+      credentialMode: credentialModeRef.current, recognitionLanguage, translationLanguage, localKeyConfigured: Boolean(credential.key) });
     if (blocked || (capabilitiesLoading && !(localSpeech && subtitleOnly))) { setError(blocked || 'Wait for Interpreter configuration to load.'); return; }
     const run = { controller: new AbortController(), audio: null };
     runRef.current = run;
@@ -220,9 +237,9 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     const isCurrent = () => mounted.current && runRef.current === run && !run.controller.signal.aborted;
     try {
       const audio = await startInterpreterAudio({
-        source, provider: captureKreyol ? 'gladia' : 'deepgram', signal: run.controller.signal,
+        source, provider: captureKreyol ? 'gladia' : 'deepgram', signal: run.controller.signal, language: recognitionLanguage,
         ...(localSpeech ? { deepgramApiKey: credential.key } : {
-          createSession: options => createInterpreterSession({ ...options, privacy_mode: privacyMode,
+          createSession: options => createInterpreterSession({ ...options, ...(recognitionLanguage === 'multi' || captureKreyol ? {} : { language: recognitionLanguage }), privacy_mode: privacyMode,
             ...(privacyMode ? {} : { glossary }) }, { signal: run.controller.signal }),
         }),
         onInterim: ({ text, lang }) => {
@@ -235,9 +252,9 @@ export default function useInterpreter({ privacyMode = true } = {}) {
           const clean = text.trim();
           if (clean.length > 5000) { setError('A transcript segment exceeded 5,000 characters. Stop and restart with shorter segments.'); return; }
           const language = lang?.slice(0, 2).toLowerCase();
-          if (!['en', 'es', 'ht'].includes(language)) return;
+          if (!Object.hasOwn(LANGUAGES, language)) return;
           if (language !== 'ht') lastNonHt.current = language;
-          const target = targetLanguage(language, htMode, lastNonHt.current);
+          const target = targetLanguage(language, htMode, lastNonHt.current, translationLanguage);
           setInterimText('');
           const previous = lastFinal.current;
           const currentRow = rowsRef.current.at(-1);
@@ -262,7 +279,7 @@ export default function useInterpreter({ privacyMode = true } = {}) {
       stop();
       if (caught.name !== 'AbortError') setError(caught.message || 'Could not start transcription.');
     }
-  }, [capabilities, capabilitiesLoading, source, captureKreyol, privacyMode, glossary, htMode, subtitleOnly, translateRow, updateRows, stop]);
+  }, [capabilities, capabilitiesLoading, source, captureKreyol, recognitionLanguage, translationLanguage, privacyMode, glossary, htMode, subtitleOnly, translateRow, updateRows, stop]);
 
   const setCredentialMode = value => {
     if (runRef.current || !['server', 'local'].includes(value)) return;
@@ -318,6 +335,8 @@ export default function useInterpreter({ privacyMode = true } = {}) {
   return {
     status, source, setSource: value => { if (!runRef.current && ['mic', 'tab'].includes(value)) changeSource(value); },
     captureKreyol, setCaptureKreyol: value => { if (!runRef.current) changeCaptureKreyol(Boolean(value)); },
+    recognitionLanguage, setRecognitionLanguage: value => { if (!runRef.current && ['multi', ...SPEECH_LANGUAGES].includes(value)) changeRecognitionLanguage(value); },
+    translationLanguage, setTranslationLanguage: value => { if (!runRef.current && (value === 'auto' || Object.hasOwn(LANGUAGES, value))) changeTranslationLanguage(value); },
     htMode, setHtMode: value => { if (!runRef.current) changeHtMode(Boolean(value)); },
     subtitleOnly, setSubtitleOnly: value => { if (!runRef.current) changeSubtitleOnly(Boolean(value)); },
     utterances, interimText, interimLang, error, dismissError: () => setError(''),
@@ -326,6 +345,6 @@ export default function useInterpreter({ privacyMode = true } = {}) {
     elapsedSeconds, start, stop, clear, retry, glossary, setGlossary, canStart,
     credentialMode, setCredentialMode, localKeyConfigured: Boolean(localCredential.key),
     localKeyRemembered: localCredential.remembered, localKeyStorageError: localCredential.error,
-    saveLocalKey, removeLocalKey, backendRequired,
+    saveLocalKey, removeLocalKey, backendRequired, configurationNotice: unavailable,
   };
 }

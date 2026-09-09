@@ -26,7 +26,7 @@ export default function DeepgramKeySettings({
     }
     setKey('');
     setFormError('');
-    setNotice(remember ? 'Key saved on this device. Its access is checked when you start listening.' : 'Key set for this session. Its access is checked when you start listening.');
+    setNotice('Key updated. Check its storage status below. Access is checked when you start listening.');
   };
   const remove = () => {
     if (busy) return;
@@ -44,13 +44,13 @@ export default function DeepgramKeySettings({
     <details className="interpreter-credentials">
       <summary>Deepgram credentials <span>{credentialMode === 'local' ? 'Temporary local key' : 'Server key'}</span></summary>
       <div className="interpreter-credentials-content">
-        <label className="interpreter-field">English / Spanish speech credentials
+        <label className="interpreter-field">Deepgram speech credentials
           <select value={credentialMode} disabled={busy} onChange={changeMode}>
             <option value="server">Server key (recommended)</option>
             <option value="local">Temporary local key</option>
           </select>
         </label>
-        <p className="interpreter-mode-help">Local mode sends a Deepgram key directly from this browser to Deepgram for English / Spanish speech. It does not send the key to IApp. Kreyòl speech and all translation still use the Render backend.</p>
+        <p className="interpreter-mode-help">Local mode sends a Deepgram key directly from this browser to Deepgram for its supported speech languages. It does not send the key to IApp. Kreyòl speech and all translation still use the Render backend.</p>
         {captureKreyol && credentialMode === 'local' && <p className="interpreter-key-note">The local Deepgram key is not used while a Kreyòl speaker is selected.</p>}
         {credentialMode === 'local' && <>
           <p className="interpreter-key-note" id={noteId}>Contact the app owner for an individual, restricted, revocable Deepgram key. Do not share an administrator key or the server key. A browser key is exposed to scripts and users with access to this browser and can incur usage charges.</p>
@@ -65,9 +65,9 @@ export default function DeepgramKeySettings({
         </>}
         <div className="interpreter-key-status">
           <p>{localKeyConfigured ? `•••••••• Key configured · ${localKeyRemembered ? 'Remembered on this device' : 'Session only'}` : 'No local key configured.'}</p>
-          {(localKeyConfigured || localKeyRemembered) && <button type="button" className="interpreter-secondary" disabled={busy} onClick={remove}>{localKeyRemembered ? 'Remove saved key' : 'Remove local key'}</button>}
+          {(localKeyConfigured || localKeyRemembered || localKeyStorageError) && <button type="button" className="interpreter-secondary" disabled={busy} onClick={remove}>{localKeyRemembered ? 'Remove saved key' : 'Remove local key'}</button>}
         </div>
-        {notice && <p className="interpreter-key-note" role="status">{notice}</p>}
+        {notice && !localKeyStorageError && <p className="interpreter-key-note" role="status">{notice}</p>}
         {formError && <p className="interpreter-key-error" role="alert">{formError}</p>}
         {localKeyStorageError && <p className="interpreter-key-error" role="alert">{localKeyStorageError}</p>}
       </div>

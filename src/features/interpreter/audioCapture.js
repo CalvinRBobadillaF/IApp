@@ -1,3 +1,5 @@
+import { SPEECH_LANGUAGES } from './languages.js';
+
 const STARTUP_TIMEOUT_MS = 60_000;
 const MAX_BUFFERED_BYTES = 256 * 1024;
 const MAX_MESSAGE_CHARS = 256 * 1024;
@@ -43,8 +45,8 @@ function sessionOptions(session, provider) {
   return { url: url.href, protocols };
 }
 
-function directDeepgramOptions(apiKey, provider) {
-  if (provider !== 'deepgram') throw new Error('A browser API key can only be used for English/Spanish transcription with Deepgram.');
+function directDeepgramOptions(apiKey, provider, language) {
+  if (provider !== 'deepgram') throw new Error('A browser API key can only be used for transcription with Deepgram, not Kreyòl/Gladia.');
   if (typeof apiKey !== 'string' || !apiKey.trim() || apiKey.trim().length > 8192
       || !/^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/.test(apiKey.trim())) {
     throw new Error('Enter a valid raw Deepgram API key without quotes or an authorization prefix.');
@@ -53,7 +55,7 @@ function directDeepgramOptions(apiKey, provider) {
   // the backend session. Credentials belong only in the WebSocket subprotocol,
   // never in a URL, server request, transcript, or error message.
   const params = new URLSearchParams({
-    model: 'nova-3', language: 'multi', smart_format: 'true',
+    model: 'nova-3', language, smart_format: 'true',
     punctuate: 'true', numerals: 'true', interim_results: 'true',
     filler_words: 'false', endpointing: '300', utterance_end_ms: '1200',
     no_delay: 'true', vad_events: 'true', diarize: 'false', mip_opt_out: 'true',
@@ -83,14 +85,15 @@ function pcm16(samples) {
  * explicit Deepgram-only compatibility option bypasses it using a supplied key.
  */
 export async function startInterpreterAudio({
-  source = 'mic', provider = 'deepgram', signal, createSession, deepgramApiKey,
+  source = 'mic', provider = 'deepgram', signal, createSession, deepgramApiKey, language = 'multi',
   onFinal, onInterim, onError, onEnded,
 }) {
   if (signal?.aborted) throw abortError();
   if (!['mic', 'tab'].includes(source) || !['deepgram', 'gladia'].includes(provider)) {
     throw new Error('Choose a supported audio source and transcription provider.');
   }
-  const directOptions = deepgramApiKey === undefined ? null : directDeepgramOptions(deepgramApiKey, provider);
+  if (!['multi', ...SPEECH_LANGUAGES].includes(language)) throw new Error('Choose a supported speech language.');
+  const directOptions = deepgramApiKey === undefined ? null : directDeepgramOptions(deepgramApiKey, provider, language);
   if (!directOptions && typeof createSession !== 'function') throw new Error('The interpreter backend is not configured.');
   const mediaDevices = navigator.mediaDevices;
   if (globalThis.isSecureContext === false || typeof WebSocket !== 'function'
@@ -192,10 +195,10 @@ export async function startInterpreterAudio({
         const alternative = message.channel?.alternatives?.[0];
         const text = typeof alternative?.transcript === 'string' ? alternative.transcript.trim() : '';
         const confidence = Number.isFinite(alternative?.confidence) ? alternative.confidence : 0;
-        const detected = alternative?.languages?.[0] ?? 'en';
+        const detected = language === 'multi' ? alternative?.languages?.[0] ?? 'en' : language;
         const lang = typeof detected === 'string' ? detected.slice(0, 2).toLowerCase() : '';
         const isFinal = message.is_final === true;
-        if (!text || !['en', 'es'].includes(lang) || (!isFinal && confidence < 0.5)) return;
+        if (!text || !SPEECH_LANGUAGES.includes(lang) || (!isFinal && confidence < 0.5)) return;
         emitTranscript(isFinal ? onFinal : onInterim, { text, lang, confidence, speechFinal: message.speech_final ?? isFinal });
       } else {
         if (message.type !== 'transcript') return;
@@ -259,7 +262,8 @@ export async function startInterpreterAudio({
       }
       let options = directOptions;
       if (!options) {
-        const session = await createSession({ provider, sample_rate: audioContext?.sampleRate ?? 16000 });
+        const session = await createSession({ provider, sample_rate: audioContext?.sampleRate ?? 16000,
+          ...(provider === 'deepgram' && language !== 'multi' ? { language } : {}) });
         if (stopped) return;
         options = sessionOptions(session, provider);
       }
